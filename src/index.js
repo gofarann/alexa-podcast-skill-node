@@ -1,4 +1,3 @@
-// jshint ignore: start
 
 'use strict';
 var Alexa = require("alexa-sdk");
@@ -9,7 +8,7 @@ var Alexa = require("alexa-sdk");
 // --------------------------------- Section 1. Data and Text strings  ---------------------------------
 // =====================================================================================================
 
-var data=[
+var data = [
   { number: 1, title: "New Beginnings", description: "Our program's very first broadcast.", date: "1995-11-17" },
 ];
 
@@ -134,17 +133,38 @@ const newSessionHandlers = {
 
 // ------------------------- END of Intent Handlers  ---------------------------------
 
+
+function SearchByEpisodeNumberHandler(){
+  var episodeNumber = this.event.request;
+  var searchQuery = this.event.request.intent.slots[episodeNumber].value;
+  var searchResults = searchDatabase(data, searchQuery);
+
+  if (searchResults.count === 1) { //one result found
+    this.handler.state = states.DESCRIPTION; // change state to description
+    console.log("match was found");
+    this.emitWithState("TellMeThisIntent");
+  } else {
+    //no match found
+    console.log("no match found");
+    console.log("searchQuery was  = " + searchQuery);
+    console.log("searchResults.results was  = " + searchResults);
+    output = "no results found";
+    this.emit(":ask", output);
+  }
+};
+
+
 function searchDatabase(dataset, searchQuery, searchType) {
     var matchFound = false;
     var results = [];
 
     //beginning search
     for (var i = 0; i < dataset.length; i++) {
-        if (sanitizeSearchQuery(searchQuery) == dataset[i][searchType]) {
+        if (sanitizeSearchQuery(searchQuery) === dataset[i][searchType]) {
             results.push(dataset[i]);
             matchFound = true;
         }
-        if ((i == dataset.length - 1) && (matchFound == false)) {
+        if ((i == dataset.length - 1) && (matchFound === false)) {
         //this means that we are on the last record, and no match was found
             matchFound = false;
             console.log("no match was found using " + searchType);
@@ -161,3 +181,44 @@ function searchDatabase(dataset, searchQuery, searchType) {
 // =====================================================================================================
 // ------------------------------- Section 3. Generating Speech Messages -------------------------------
 // =====================================================================================================
+
+function generateSearchResultsMessage(searchQuery,results){
+    var sentence;
+    var details;
+    var prompt;
+
+    if (results){
+      switch (true) {
+      case (results.length === 0):
+          sentence = "Hmm. I couldn't find " + searchQuery + ". " + getGenericHelpMessage(data);
+          break;
+      case (results.length == 1):
+          var episode = results[0];
+          details = episode.title + " " + episode.number + " from " + episode.date;
+          prompt = generateNextPromptMessage(episode,"current");
+          sentence = details + prompt;
+          console.log(sentence);
+          break;
+      case (results.length > 1):
+          sentence = "I found " + results.length + " matching results";
+          break;
+      }
+    }
+    else{
+      sentence = "Sorry, I didn't quite get that. " + getGenericHelpMessage(data);
+    }
+    return sentence;
+}
+
+function getGenericHelpMessage(data){
+  var sentences = ["ask - play episode" + getRandomEpisodeNumber(1, 500)];
+  return "You can " + sentences;
+}
+
+// =====================================================================================================
+// ------------------------------------ Section 4. Helper Functions  -----------------------------------
+// =====================================================================================================
+
+function getRandomEpisodeNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}

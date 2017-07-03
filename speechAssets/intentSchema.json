@@ -45,9 +45,9 @@
         "{episodeNumber}",
         "episode {episodeNumber}",
         "episode number {episodeNumber}",
-        "play episode {episodeNumber}",
-        "play episode number {episodeNumber}",
-        "play me episode number {episodeNumber}",
+        "find episode {episodeNumber}",
+        "find episode number {episodeNumber}",
+        "find me episode number {episodeNumber}",
         "start episode {episodeNumber}",
 
       ],
@@ -65,11 +65,11 @@
       "name": "EPISODE_NUMBER",
       "values": [
         {
-          "name": {
-            "value": 1
-          }
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "exclusiveMaximum": false
         }
-
       ]
     }
   ]

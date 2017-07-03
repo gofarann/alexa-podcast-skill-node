@@ -48,8 +48,7 @@
         "find episode {episodeNumber}",
         "find episode number {episodeNumber}",
         "find me episode number {episodeNumber}",
-        "start episode {episodeNumber}",
-
+        "start episode {episodeNumber}"
       ],
       "slots": [
         {
@@ -58,19 +57,19 @@
           "samples": []
         }
       ]
-    },
+    }
   ],
   "types": [
     {
       "name": "EPISODE_NUMBER",
       "values": [
         {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "exclusiveMaximum": false
+          "name": {
+            "value": "1"
+          }
         }
       ]
     }
+
   ]
 }

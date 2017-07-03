@@ -1,0 +1,76 @@
+{
+  "intents": [
+    {
+      "name": "AMAZON.CancelIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.HelpIntent",
+      "samples": [
+        "how do I search"
+      ]
+    },
+    {
+      "name": "AMAZON.NoIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.RepeatIntent",
+      "samples": [
+        "repeat that",
+        "say that again",
+        "can you say that again",
+        "please repeat"
+      ]
+    },
+    {
+      "name": "AMAZON.StartOverIntent",
+      "samples": [
+        "startover",
+        "new search",
+        "search again"
+      ]
+    },
+    {
+      "name": "AMAZON.StopIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.YesIntent",
+      "samples": []
+    },
+    {
+      "name": "PlayByEpisodeNumberIntent",
+      "samples": [
+        "{episodeNumber}",
+        "episode {episodeNumber}",
+        "episode number {episodeNumber}",
+        "play episode {episodeNumber}",
+        "play episode number {episodeNumber}",
+        "play me episode number {episodeNumber}",
+        "start episode {episodeNumber}",
+
+      ],
+      "slots": [
+        {
+          "name": "episodeNumber",
+          "type": "EPISODE_NUMBER",
+          "samples": []
+        }
+      ]
+    },
+  ],
+  "types": [
+    {
+      "name": "EPISODE_NUMBER",
+      "values": [
+        {
+          "name": {
+            "value": 1
+          }
+        }
+
+      ]
+    }
+  ]
+}

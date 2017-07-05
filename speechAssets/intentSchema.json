@@ -1,21 +1,21 @@
 {
   "intents": [
     {
-      "name": "AMAZON.CancelIntent",
+      "intent": "AMAZON.CancelIntent",
       "samples": []
     },
     {
-      "name": "AMAZON.HelpIntent",
+      "intent": "AMAZON.HelpIntent",
       "samples": [
         "how do I search"
       ]
     },
     {
-      "name": "AMAZON.NoIntent",
+      "intent": "AMAZON.NoIntent",
       "samples": []
     },
     {
-      "name": "AMAZON.RepeatIntent",
+      "intent": "AMAZON.RepeatIntent",
       "samples": [
         "repeat that",
         "say that again",
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "name": "AMAZON.StartOverIntent",
+      "intent": "AMAZON.StartOverIntent",
       "samples": [
         "startover",
         "new search",
@@ -32,44 +32,32 @@
       ]
     },
     {
-      "name": "AMAZON.StopIntent",
+      "intent": "AMAZON.StopIntent",
       "samples": []
     },
     {
-      "name": "AMAZON.YesIntent",
+      "intent": "AMAZON.YesIntent",
       "samples": []
     },
     {
-      "name": "SearchByEpisodeNumberIntent",
+      "intent": "SearchByEpisodeIntent",
       "samples": [
         "{episodeNumber}",
         "episode {episodeNumber}",
-        "episode number {episodeNumber}",
         "find episode {episodeNumber}",
-        "find episode number {episodeNumber}",
-        "find me episode number {episodeNumber}",
         "start episode {episodeNumber}"
       ],
       "slots": [
         {
           "name": "episodeNumber",
-          "type": "EPISODE_NUMBER",
-          "samples": []
+          "type": "AMAZON.NUMBER",
+          "samples": [
+            "one",
+            "one hundred twenty three",
+            "eighty"
+          ]
         }
       ]
     }
-  ],
-  "types": [
-    {
-      "name": "EPISODE_NUMBER",
-      "values": [
-        {
-          "name": {
-            "value": "1"
-          }
-        }
-      ]
-    }
-
   ]
 }

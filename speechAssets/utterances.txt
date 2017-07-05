@@ -1,0 +1,5 @@
+SearchByEpisodeNumberIntent {episodeNumber}
+SearchByEpisodeNumberIntent find {episodeNumber}
+SearchByEpisodeNumberIntent find episode {episodeNumber}
+SearchByEpisodeNumberIntent find me episode {episodeNumber}
+SearchByEpisodeNumberIntent find me episode number {episodeNumber}

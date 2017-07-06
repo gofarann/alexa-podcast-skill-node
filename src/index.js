@@ -1,24 +1,20 @@
 'use strict';
 var Alexa = require('alexa-sdk');
+var data = require('./data');
+
 
 exports.handler = function(event, context, callback){
   var alexa = Alexa.handler(event, context, callback);
-  alexa.registerHandlers(handlers);
-  alexa.registerHandlers(startSearchHandlers);
-  alexa.registerHandlers(descriptionHandlers);
-
+  alexa.registerHandlers(handlers, startSearchHandlers, descriptionHandlers);
   alexa.execute();
 };
 
 // =====================================================================================================
 // --------------------------------- Section 1. Data and Text strings  ---------------------------------
 // =====================================================================================================
-var skillName = "Alexa This American Life Lookup";
+//eventually move this to separate file?
 
-var data = [
-  { number: 2, title: 'Small Scale Sin', description: 'Small-scale stories on the nature of small-scale sin.', date: "1995-11-24" },
-  { number: 3, title: 'Poultry Slam 1995', description: 'Stories decrying the wonders of turkeys, chickens, and other fowl.', date: "1995-12-01" },
-];
+var skillName = "Alexa This American Life Lookup";
 
 var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. ";
 
@@ -93,13 +89,12 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
   //handle "play episode" intent
   //handle "new search" intent
+  "SearchByEpisodeNumberIntent": function() {
+    SearchByEpisodeNumberIntentHandler.call(this);
+  },
 
   "Unhandled": function(){
     this.emit(":ask", getGenericHelpMessage(data));
-  },
-
-  "SearchByEpisodeNumberIntent": function() {
-    SearchByEpisodeNumberIntentHandler.call(this);
   }
 
 });

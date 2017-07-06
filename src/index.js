@@ -139,6 +139,7 @@ function SearchByEpisodeNumberIntentHandler(){
   if (searchResults.count > 0) {
     // assign episodenumber to object attributes attributes?
     Object.assign(this.attributes, {
+      "STATE": states.DESCRIPTION,
       "currentEpisodeInfo": searchResults
     });
 

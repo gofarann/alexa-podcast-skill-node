@@ -75,6 +75,13 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
     SearchByEpisodeNumberIntentHandler.call(this);
   },
 
+  //handle "read me the description" intent
+  "ReadDescriptionIntent": function(){
+    this.handler.state = states.DESCRIPTION;
+
+    ReadDescriptionIntentHandler.call(this);
+  },
+
   "Unhandled": function() {
     this.emit(":ask", getGenericHelpMessage(data));
   }
@@ -83,10 +90,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 
 var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
-  //handle "read me the description" intent
-  "ReadDescriptionIntent": function(){
-    ReadDescriptionIntentHandler.call(this);
-  },
+
   //handle "play episode" intent
   //handle "new search" intent
 
@@ -137,9 +141,8 @@ function SearchByEpisodeNumberIntentHandler(){
   var searchResults = searchDatabase(data, searchQuery, searchType);
 
   if (searchResults.count > 0) { //one result found
-    // var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
-    var speechOutput = "I found a match for episode";
-
+    var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
+    // var speechOutput = "I found a match for episode";
     this.emit(":ask", speechOutput);
 
   } else {
@@ -154,7 +157,6 @@ function SearchByEpisodeNumberIntentHandler(){
 
 
 function ReadDescriptionIntentHandler(){
-  this.handler.state = states.DESCRIPTION;
   this.emit(":tell", "this is the description");
 }
 

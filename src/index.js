@@ -43,6 +43,10 @@ var handlers = {
 
   "SearchByEpisodeNumberIntent": function() {
      SearchByEpisodeNumberIntentHandler.call(this);
+  },
+
+  "Unhandled": function() {
+    this.emit(":ask", getGenericHelpMessage(data));
   }
 
 };
@@ -74,7 +78,6 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
   //handle "read me the description" intent
   "ReadDescriptionIntent": function(){
     this.handler.state = states.DESCRIPTION;
-
     ReadDescriptionIntentHandler.call(this);
   },
 
@@ -113,9 +116,7 @@ function searchDatabase(dataset, searchQuery, searchType) {
     if ((i == dataset.length - 1) && (matchFound === false)) {
       //this means that we are on the last record, and no match was found
       matchFound = false;
-      // console.log("no match was found using " + searchType);
-      //if more than searchable items were provided, set searchType to the next item, and set i=0
-      //ideally you want to start search with lastName, then firstname, and then cityName
+
     }
   }
   return {
@@ -131,20 +132,20 @@ function searchDatabase(dataset, searchQuery, searchType) {
 
 function SearchByEpisodeNumberIntentHandler(){
 
-  var searchQuery = Number(this.event.request.intent.slots.episodeNumber.value);
+  var searchQuery = parseInt(this.event.request.intent.slots.episodeNumber.value);
   var searchType = "number";
   var searchResults = searchDatabase(data, searchQuery, searchType);
 
-  if (searchResults.count > 0) { //one result found
+  if (searchResults.count > 0) {
+    // assign episodenumber to object attributes attributes?
+    Object.assign(this.attributes, {
+      "currentEpisodeInfo": searchResults
+    });
+
     var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
-    // var speechOutput = "I found a match for episode";
     this.emit(":ask", speechOutput);
 
   } else {
-    //no match found
-    // console.log("no match found");
-    // console.log("searchQuery was  = " + searchQuery);
-    // console.log("searchResults.results was  = " + searchResults);
     var output = "no results found";
     this.emit(":ask", output);
   }
@@ -152,10 +153,11 @@ function SearchByEpisodeNumberIntentHandler(){
 
 
 function ReadDescriptionIntentHandler(){
-  this.emit(":tell", "this is the description");
+  // get 'results' output to persist from the searchbyepisodenumberhandler
+  console.log(this.attributes.currentEpisodeInfo);
+  var description = this.attributes.currentEpisodeInfo.results[0].description;
+  this.emit(":tell", description);
 }
-
-
 
 // =====================================================================================================
 // --------------------------------- Section 3. generate messages  ---------------------------------

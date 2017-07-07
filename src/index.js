@@ -13,7 +13,6 @@ exports.handler = function(event, context, callback){
 // =====================================================================================================
 // --------------------------------- Section 1. Data and Text strings  ---------------------------------
 // =====================================================================================================
-//eventually move this to separate file?
 
 var skillName = "Alexa This American Life Lookup";
 
@@ -50,10 +49,9 @@ var handlers = {
     this.handler.state = states.STREAM_MODE;
 
     if(this.attributes.currentEpisodeInfo){
-
-      PlayEpisodeIntentHandler.call(this.attributes.results[0].number);
+      PlayEpisodeIntentHandler.call(this, this.attributes.results[0].number);
     } else {
-      PlayEpisodeIntentHandler.call(data.length);
+      PlayEpisodeIntentHandler.call(this, data.length);
     }
   },
 
@@ -119,8 +117,8 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
   "AMAZON.RepeatIntent": function() {
     var output;
-    if(this.attributes.currentEpisodeInfo.results[0].description){
-      output = this.attributes.currentEpisodeInfo.results[0].description;
+    if(this.attributes.currentEpisodeInfo.description){
+      output = this.attributes.currentEpisodeInfo.description;
       // console.log("repeating last speech");
     }
     else{
@@ -131,12 +129,21 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
   },
 
   "Unhandled": function(){
-    this.emit(":ask", "Sorry, I don't understand that request" + getGenericHelpMessage(data));
+    this.emit(":ask", "Sorry, I don't understand that request. " + getGenericHelpMessage(data));
   }
 
 });
 
 var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
+  "PlayEpisodeIntent": function() {
+
+    if(this.attributes.currentEpisodeInfo){
+      PlayEpisodeIntentHandler.call(this.attributes.results[0].number);
+    } else {
+      PlayEpisodeIntentHandler.call(data.length);
+    }
+  },
+
   "AMAZON.PauseIntent": function(){
 
   },
@@ -146,7 +153,7 @@ var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
   },
 
   "Unhandled": function(){
-    this.emit(":ask", "Sorry, I couldn't stream this episode" + getGenericHelpMessage(data));
+    this.emit(":ask", "Sorry, I couldn't stream this episode." + getGenericHelpMessage(data));
   }
 
 });
@@ -179,17 +186,40 @@ function searchDatabase(dataset, searchQuery, searchType) {
 // --------------------------------- Section 3. Intent Handlers  ---------------------------------
 // =====================================================================================================
 
+// old intent handler using database
+// function SearchByEpisodeNumberIntentHandler(){
+//
+//   var searchQuery = parseInt(this.event.request.intent.slots.episodeNumber.value);
+//   var searchType = "number";
+//   var searchResults = searchDatabase(data, searchQuery, searchType);
+//
+//   if (searchResults.count > 0) {
+//     // assign episodenumber to object attributes attributes?
+//     Object.assign(this.attributes, {
+//       "STATE": states.DESCRIPTION,
+//       "currentEpisodeInfo": searchResults
+//     });
+//
+//     var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
+//     this.emit(":ask", speechOutput);
+//
+//   } else {
+//     var output = "no results found";
+//     this.emit(":ask", output);
+//   }
+// }
+
 function SearchByEpisodeNumberIntentHandler(){
 
   var searchQuery = parseInt(this.event.request.intent.slots.episodeNumber.value);
   var searchType = "number";
-  var searchResults = searchDatabase(data, searchQuery, searchType);
+  var data = getEpisodeDataFromAPI(searchQuery)
 
-  if (searchResults.count > 0) {
+  if (data.results.count === 1) {
     // assign episodenumber to object attributes attributes?
     Object.assign(this.attributes, {
       "STATE": states.DESCRIPTION,
-      "currentEpisodeInfo": searchResults
+      "currentEpisodeInfo": data.results[0]
     });
 
     var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
@@ -202,16 +232,20 @@ function SearchByEpisodeNumberIntentHandler(){
 }
 
 
+
+
 function ReadDescriptionIntentHandler(){
   // get 'results' output to persist from the searchbyepisodenumberhandler
   // console.log(this.attributes.currentEpisodeInfo);
-  var description = this.attributes.currentEpisodeInfo.results[0].description;
+  var description = this.attributes.currentEpisodeInfo.description;
   this.emit(":tell", description);
 }
 
-function PlayEpisodeIntentHandler(episodeNumber){
+
+function PlayEpisodeIntentHandler(podcast){
     var playBehavior = 'REPLACE_ALL';
-    var podcastUrl = generatePodcastUrl(episodeNumber);
+    console.log(podcast);
+    var podcastUrl = generatePodcastUrl(podcast);
     console.log(podcastUrl);
     var token = "12345";
     var offsetInMilliseconds = 0;
@@ -239,9 +273,17 @@ function getRandomEpisodeNumber(min, max) {
 
 function generatePodcastUrl(episodeNumber) {
   if (parseInt(episodeNumber) <= 536){
-    return "http://audio.thisamericanlife.org/jomamashouse/ismymamashouse/" + episodeNumber + ".mp3";
+    return "https://audio.thisamericanlife.org/jomamashouse/ismymamashouse/" + episodeNumber + ".mp3";
   }
   else {
-    return "http://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
+    return "https://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
   }
+}
+
+function getEpisodeDataFromAPI(episodeNumber){
+    var http = require('http');
+    var getUrl = 'https://www.audiosear.ch/api/search/episodes/title%3A%20%22%23'+ episodeNumber +'%3A%20%22?filters[show_id]=27';
+    var data = http.get(getUrl);
+    return data;
+
 }

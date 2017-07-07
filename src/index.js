@@ -213,7 +213,8 @@ function SearchByEpisodeNumberIntentHandler(){
 
   var searchQuery = parseInt(this.event.request.intent.slots.episodeNumber.value);
   var searchType = "number";
-  var data = getEpisodeDataFromAPI(searchQuery)
+  var data = getEpisodeDataFromAPI(searchQuery);
+  console.log(data);
 
   if (data.results.count === 1) {
     // assign episodenumber to object attributes attributes?
@@ -282,7 +283,7 @@ function generatePodcastUrl(episodeNumber) {
 
 function getEpisodeDataFromAPI(episodeNumber){
     var http = require('http');
-    var getUrl = 'https://www.audiosear.ch/api/search/episodes/title%3A%20%22%23'+ episodeNumber +'%3A%20%22?filters[show_id]=27';
+    var getUrl = 'http://www.audiosear.ch/api/search/episodes/title%3A%20%22%23'+ episodeNumber +'%3A%20%22?filters[show_id]=27';
     var data = http.get(getUrl);
     return data;
 

@@ -1,11 +1,12 @@
 'use strict';
 var Alexa = require('alexa-sdk');
 var data = require('./data');
+var appID = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
 
 
 exports.handler = function(event, context, callback){
   var alexa = Alexa.handler(event, context, callback);
-  alexa.registerHandlers(handlers, startSearchHandlers, descriptionHandlers);
+  alexa.registerHandlers(handlers, startSearchHandlers, descriptionHandlers, streamModeHandlers);
   alexa.execute();
 };
 
@@ -20,7 +21,7 @@ var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. "
 
 var NEW_SEARCH_MESSAGE = getGenericHelpMessage(data);
 
-var DESCRIPTION_STATE_HELP_MESSAGE = "Here are some things you can say: play episode, or tell me about the episode";
+var DESCRIPTION_STATE_HELP_MESSAGE = "Here are some things you can say: find episode, or tell me about the episode";
 
 var SHUTDOWN_MESSAGE = "Ok.";
 
@@ -32,7 +33,7 @@ var SHUTDOWN_MESSAGE = "Ok.";
 var states = {
   SEARCHMODE: "_SEARCHMODE",
   DESCRIPTION: "_DESCRIPTION",
-  // MULTIPLE_RESULTS: "_MULTIPLE_RESULTS"
+  STREAM_MODE: "_STREAM_MODE"
 };
 
 var handlers = {
@@ -43,6 +44,11 @@ var handlers = {
 
   "SearchByEpisodeNumberIntent": function() {
      SearchByEpisodeNumberIntentHandler.call(this);
+  },
+
+  "PlayEpisodeIntent": function() {
+    this.handler.state = states.STREAM_MODE;
+    PlayEpisodeIntentHandler.call(this);
   },
 
   "Unhandled": function() {
@@ -60,8 +66,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
   },
   "AMAZON.RepeatIntent": function() {
     var output;
-    if(this.attributes.lastSearch){
-      output = this.attributes.lastSearch.lastSpeech;
+    if(this.attributes.currentEpisodeInfo){
+      SearchByEpisodeNumberIntentHandler.call(this.attributes.results[0].number);
       // console.log("repeating last speech");
     }
     else{
@@ -89,15 +95,47 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 
 var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
+  // handle "play episode" intent
+  "PlayEpisodeIntent": function() {
+    this.handler.state = states.STREAM_MODE;
+    PlayEpisodeIntentHandler.call(this);
+  },
 
-  //handle "play episode" intent
   //handle "new search" intent
   "SearchByEpisodeNumberIntent": function() {
     SearchByEpisodeNumberIntentHandler.call(this);
   },
 
+  "AMAZON.RepeatIntent": function() {
+    var output;
+    if(this.attributes.currentEpisodeInfo.results[0].description){
+      output = this.attributes.currentEpisodeInfo.results[0].description;
+      // console.log("repeating last speech");
+    }
+    else{
+      output = "I can't recall what I said before" + getGenericHelpMessage(data);
+      // console.log("no last speech availble. outputting standard help message.");
+    }
+    this.emit(":ask",output, output);
+  },
+
   "Unhandled": function(){
-    this.emit(":ask", getGenericHelpMessage(data));
+    this.emit(":ask", "Sorry, I don't understand that request" + getGenericHelpMessage(data));
+  }
+
+});
+
+var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
+  "AMAZON.PauseIntent": function(){
+
+  },
+
+  "AMAZON.ResumeIntent": function(){
+
+  },
+
+  "Unhandled": function(){
+    this.emit(":ask", "Sorry, I couldn't stream this episode" + getGenericHelpMessage(data));
   }
 
 });
@@ -155,9 +193,21 @@ function SearchByEpisodeNumberIntentHandler(){
 
 function ReadDescriptionIntentHandler(){
   // get 'results' output to persist from the searchbyepisodenumberhandler
-  console.log(this.attributes.currentEpisodeInfo);
+  // console.log(this.attributes.currentEpisodeInfo);
   var description = this.attributes.currentEpisodeInfo.results[0].description;
   this.emit(":tell", description);
+}
+
+function PlayEpisodeIntentHandler(){
+    this.handler.state = states.STREAM_MODE;
+    var playBehavior = 'REPLACE_ALL';
+    var podcast = 'https://ia902508.us.archive.org/5/items/testmp3testfile/mpthreetest.mp3';
+    var token = "12345";
+    var offsetInMilliseconds = 0;
+
+    this.response.audioPlayerPlay(playBehavior, podcast, token, null, offsetInMilliseconds);
+    this.emit(':responseReady');
+
 }
 
 // =====================================================================================================

@@ -48,7 +48,13 @@ var handlers = {
 
   "PlayEpisodeIntent": function() {
     this.handler.state = states.STREAM_MODE;
-    PlayEpisodeIntentHandler.call(this);
+
+    if(this.attributes.currentEpisodeInfo){
+
+      PlayEpisodeIntentHandler.call(this.attributes.results[0].number);
+    } else {
+      PlayEpisodeIntentHandler.call(data.length);
+    }
   },
 
   "Unhandled": function() {
@@ -98,7 +104,12 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
   // handle "play episode" intent
   "PlayEpisodeIntent": function() {
     this.handler.state = states.STREAM_MODE;
-    PlayEpisodeIntentHandler.call(this);
+
+    if(this.attributes.currentEpisodeInfo){
+      PlayEpisodeIntentHandler.call(this.attributes.results[0].number);
+    } else {
+      PlayEpisodeIntentHandler.call(data.length);
+    }
   },
 
   //handle "new search" intent
@@ -198,14 +209,14 @@ function ReadDescriptionIntentHandler(){
   this.emit(":tell", description);
 }
 
-function PlayEpisodeIntentHandler(){
-    this.handler.state = states.STREAM_MODE;
+function PlayEpisodeIntentHandler(episodeNumber){
     var playBehavior = 'REPLACE_ALL';
-    var podcast = 'https://ia902508.us.archive.org/5/items/testmp3testfile/mpthreetest.mp3';
+    var podcastUrl = generatePodcastUrl(episodeNumber);
+    console.log(podcastUrl);
     var token = "12345";
     var offsetInMilliseconds = 0;
 
-    this.response.audioPlayerPlay(playBehavior, podcast, token, null, offsetInMilliseconds);
+    this.response.audioPlayerPlay(playBehavior, podcastUrl, token, null, offsetInMilliseconds);
     this.emit(':responseReady');
 
 }
@@ -224,4 +235,13 @@ function getGenericHelpMessage(data){
 
 function getRandomEpisodeNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function generatePodcastUrl(episodeNumber) {
+  if (parseInt(episodeNumber) <= 536){
+    return "http://audio.thisamericanlife.org/jomamashouse/ismymamashouse/" + episodeNumber + ".mp3";
+  }
+  else {
+    return "http://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
+  }
 }

@@ -8,16 +8,13 @@ var appID = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
 // =====================================================================================================
 
 // should move this to a .env and git ignore ... don't know how to do that right now
+var MyData = {};
 var Audiosearch = require('audiosearch-client-node');
 var app_id = "1cd25a65f3590902e56dd4d4a398cdbb66cb807b4e81e0fc2172e4956af3a2ac";
 var secret_key = "84aace8da93607e7d3098a0b13e479e0fb083f976a799f19cfd2fa0ab311c18f";
 var audiosearch = new Audiosearch(app_id, secret_key);
-var episodeKey = audiosearch.searchEpisodes("show_id:27").then(function (results) {
-// console.log(results.total_results); //this is response length aka number of responses
-// console.log(results.results[0].title); //this is the title of the first result
-// console.log(results.results[0].description); //this is the title of the first result
-  return results;
-});
+
+
 
 
 exports.handler = function(event, context, callback){
@@ -58,16 +55,20 @@ var handlers = {
   },
 
   "SearchByEpisodeNumberIntent": function() {
-     SearchByEpisodeNumberIntentHandler.call(this);
+    SearchByEpisodeNumberIntentHandler.call(this);
   },
+
 
   "PlayEpisodeIntent": function() {
     this.handler.state = states.STREAM_MODE;
 
     if(this.attributes.currentEpisodeInfo){
-      PlayEpisodeIntentHandler.call(this, this.attributes.results[0].number);
+      var title = this.attributes.currentEpisodeInfo.title;
+
+      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')));
+
     } else {
-      PlayEpisodeIntentHandler.call(this, data.length);
+      this.emit(":tell", "Sorry, I couldn't play this episode. ");
     }
   },
 
@@ -115,14 +116,21 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
 
 var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
+  "ReadDescriptionIntent": function(){
+    this.handler.state = states.DESCRIPTION;
+    ReadDescriptionIntentHandler.call(this);
+  },
+
   // handle "play episode" intent
   "PlayEpisodeIntent": function() {
     this.handler.state = states.STREAM_MODE;
 
     if(this.attributes.currentEpisodeInfo){
-      PlayEpisodeIntentHandler.call(this.attributes.results[0].number);
+      var title = this.attributes.currentEpisodeInfo.title;
+      console.log(title.substr(1, title.indexOf(':')));
+      PlayEpisodeIntentHandler.call(title.substr(1, title.indexOf(':')));
     } else {
-      PlayEpisodeIntentHandler.call(data.length);
+      this.emit(":tell", "Sorry, I couldn't play this episode. ");
     }
   },
 
@@ -151,12 +159,15 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 });
 
 var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
+  // handle "play episode" intent
   "PlayEpisodeIntent": function() {
+    this.handler.state = states.STREAM_MODE;
 
     if(this.attributes.currentEpisodeInfo){
-      PlayEpisodeIntentHandler.call(this.attributes.results[0].number);
+      var title = this.attributes.currentEpisodeInfo.title;
+      PlayEpisodeIntentHandler.call(title.substr(1, title.indexOf(':')));
     } else {
-      PlayEpisodeIntentHandler.call(data.length);
+      this.emit(":tell", "Sorry, I couldn't play this episode. ");
     }
   },
 
@@ -175,80 +186,59 @@ var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
 });
 
 
-function searchDatabase(dataset, searchQuery, searchType) {
-  var matchFound = false;
-  var results = [];
-
-  //beginning search
-  for (var i = 0; i < dataset.length; i++) {
-    if (searchQuery === dataset[i][searchType]) {
-      results.push(dataset[i]);
-      matchFound = true;
-    }
-    if ((i == dataset.length - 1) && (matchFound === false)) {
-      //this means that we are on the last record, and no match was found
-      matchFound = false;
-
-    }
-  }
-  return {
-    count: results.length,
-    results: results
-  };
-}
+// function searchDatabase(dataset, searchQuery, searchType) {
+//   var matchFound = false;
+//   var results = [];
+//
+//   //beginning search
+//   for (var i = 0; i < dataset.length; i++) {
+//     if (searchQuery === dataset[i][searchType]) {
+//       results.push(dataset[i]);
+//       matchFound = true;
+//     }
+//     if ((i == dataset.length - 1) && (matchFound === false)) {
+//       //this means that we are on the last record, and no match was found
+//       matchFound = false;
+//
+//     }
+//   }
+//   return {
+//     count: results.length,
+//     results: results
+//   };
+// }
 
 
 // =====================================================================================================
 // --------------------------------- Section 3. Intent Handlers  ---------------------------------
 // =====================================================================================================
 
-// old intent handler using database
-// function SearchByEpisodeNumberIntentHandler(){
-//
-//   var searchQuery = parseInt(this.event.request.intent.slots.episodeNumber.value);
-//   var searchType = "number";
-//   var searchResults = searchDatabase(data, searchQuery, searchType);
-//
-//   if (searchResults.count > 0) {
-//     // assign episodenumber to object attributes attributes?
-//     Object.assign(this.attributes, {
-//       "STATE": states.DESCRIPTION,
-//       "currentEpisodeInfo": searchResults
-//     });
-//
-//     var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
-//     this.emit(":ask", speechOutput);
-//
-//   } else {
-//     var output = "no results found";
-//     this.emit(":ask", output);
-//   }
-// }
-
 function SearchByEpisodeNumberIntentHandler(){
 
   var episodeNumber = parseInt(this.event.request.intent.slots.episodeNumber.value);
-  var episodeInfo = findEpisodeInKey(episodeNumber);
+  var that = this;
 
+  audiosearch.searchEpisodes("show_id:27").then(function (results) {
 
-  if (episodeInfo !== false) {
-    // assign episodenumber to object attributes attributes?
-    Object.assign(this.attributes, {
-      "STATE": states.DESCRIPTION,
-      "currentEpisodeInfo": episodeInfo
-    });
+    if (results.total_results !== 0) {
 
-    var speechOutput = "I found a match for episode" + episodeNumber + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
-    this.emit(":ask", speechOutput);
+      Object.assign(that.attributes, {
+        "STATE": states.DESCRIPTION,
+        "currentEpisodeInfo": results.results[0]
+        }
+      );
 
-  } else {
-    var output = "no results found";
-    this.emit(":ask", output);
+      var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + DESCRIPTION_STATE_HELP_MESSAGE;
+      that.emit(":ask", speechOutput);
+
+    } else {
+      var output = "no results found";
+      that.emit(":ask", output);
+    }
+
   }
-
+);
 }
-
-
 
 
 function ReadDescriptionIntentHandler(){
@@ -260,15 +250,15 @@ function ReadDescriptionIntentHandler(){
 
 
 function PlayEpisodeIntentHandler(podcast){
-    var playBehavior = 'REPLACE_ALL';
-    console.log(podcast);
-    var podcastUrl = generatePodcastUrl(podcast);
-    console.log(podcastUrl);
-    var token = "12345";
-    var offsetInMilliseconds = 0;
+  var playBehavior = 'REPLACE_ALL';
+  console.log(podcast);
+  var podcastUrl = generatePodcastUrl(podcast);
+  console.log(podcastUrl);
+  var token = "12345";
+  var offsetInMilliseconds = 0;
 
-    this.response.audioPlayerPlay(playBehavior, podcastUrl, token, null, offsetInMilliseconds);
-    this.emit(':responseReady');
+  this.response.audioPlayerPlay(playBehavior, podcastUrl, token, null, offsetInMilliseconds);
+  this.emit(':responseReady');
 
 }
 
@@ -295,21 +285,4 @@ function generatePodcastUrl(episodeNumber) {
   else {
     return "https://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
   }
-}
-
-function findEpisodeInKey(episodeNumber){
-
-  for(var i=0; i < episodeKey.total_results; i++){
-    if(episodeKey.results[i].title.includes(episodeNumber.toString())){
-      var episodeInfo = {};
-      episodeInfo.title = episodeKey.results[i].title;
-      episodeInfo.description = episodeKey.results[i].description;
-      episodeInfo.id = episodeKey.results[i].id;
-      return episodeInfo;
-    } else {
-      return false;
-    }
-
-  }
-
 }

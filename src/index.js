@@ -2,13 +2,22 @@
 var Alexa = require('alexa-sdk');
 var data = require('./data');
 var appID = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
-var Audiosearch = require('audiosearch-client-node');
+
+// =====================================================================================================
+// --------------------------------- Audiosear.ch API Setup ---------------------------------
+// =====================================================================================================
 
 // should move this to a .env and git ignore ... don't know how to do that right now
-
+var Audiosearch = require('audiosearch-client-node');
 var app_id = "1cd25a65f3590902e56dd4d4a398cdbb66cb807b4e81e0fc2172e4956af3a2ac";
 var secret_key = "84aace8da93607e7d3098a0b13e479e0fb083f976a799f19cfd2fa0ab311c18f";
 var audiosearch = new Audiosearch(app_id, secret_key);
+var episodeKey = audiosearch.searchEpisodes("show_id:27").then(function (results) {
+// console.log(results.total_results); //this is response length aka number of responses
+// console.log(results.results[0].title); //this is the title of the first result
+// console.log(results.results[0].description); //this is the title of the first result
+  return results;
+});
 
 
 exports.handler = function(event, context, callback){
@@ -218,22 +227,18 @@ function searchDatabase(dataset, searchQuery, searchType) {
 
 function SearchByEpisodeNumberIntentHandler(){
 
-  var searchQuery = parseInt(this.event.request.intent.slots.episodeNumber.value);
-  var searchType = "number";
-  var response = audiosearch.getShow('27').then(function (data) {
-    return data;
-  });
+  var episodeNumber = parseInt(this.event.request.intent.slots.episodeNumber.value);
+  var episodeInfo = findEpisodeInKey(episodeNumber);
 
-  console.log(response);
 
-  if (response.results.count === 1) {
+  if (episodeInfo !== false) {
     // assign episodenumber to object attributes attributes?
     Object.assign(this.attributes, {
       "STATE": states.DESCRIPTION,
-      "currentEpisodeInfo": response.results[0]
+      "currentEpisodeInfo": episodeInfo
     });
 
-    var speechOutput = "I found a match for episode" + searchQuery + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
+    var speechOutput = "I found a match for episode" + episodeNumber + ", " + DESCRIPTION_STATE_HELP_MESSAGE;
     this.emit(":ask", speechOutput);
 
   } else {
@@ -292,10 +297,19 @@ function generatePodcastUrl(episodeNumber) {
   }
 }
 
-function getEpisodeDataFromAPI(episodeNumber){
-    var http = require('http');
-    var getUrl = 'http://www.audiosear.ch/api/search/episodes/title%3A%20%22%23'+ episodeNumber +'%3A%20%22?filters[show_id]=27';
-    var data = http.get(getUrl);
-    return data;
+function findEpisodeInKey(episodeNumber){
+
+  for(var i=0; i < episodeKey.total_results; i++){
+    if(episodeKey.results[i].title.includes(episodeNumber.toString())){
+      var episodeInfo = {};
+      episodeInfo.title = episodeKey.results[i].title;
+      episodeInfo.description = episodeKey.results[i].description;
+      episodeInfo.id = episodeKey.results[i].id;
+      return episodeInfo;
+    } else {
+      return false;
+    }
+
+  }
 
 }

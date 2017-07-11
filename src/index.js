@@ -19,7 +19,7 @@ var audiosearch = new Audiosearch(app_id, secret_key);
 
 exports.handler = function(event, context, callback){
   var alexa = Alexa.handler(event, context, callback);
-  alexa.registerHandlers(handlers, startSearchHandlers, descriptionHandlers, streamModeHandlers);
+  alexa.registerHandlers(launchHandlers, startSearchHandlers, descriptionHandlers, streamModeHandlers);
   alexa.execute();
 };
 
@@ -48,7 +48,7 @@ var states = {
   STREAM_MODE: "_STREAM_MODE"
 };
 
-var handlers = {
+var launchHandlers = {
   'LaunchRequest': function () {
     this.handler.state = states.SEARCHMODE;
     this.emit(':ask', WELCOME_MESSAGE + getGenericHelpMessage(data));
@@ -65,10 +65,10 @@ var handlers = {
     if(this.attributes.currentEpisodeInfo){
       var title = this.attributes.currentEpisodeInfo.title;
 
-      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')));
+      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
 
     } else {
-      this.emit(":tell", "Sorry, I couldn't play this episode. ");
+      this.emit(":tell", "You haven't specified an episode");
     }
   },
 
@@ -98,6 +98,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
     this.emit(":ask",output, output);
   },
 
+  ///////////// custom intents //////////////
+
   "SearchByEpisodeNumberIntent": function() {
     SearchByEpisodeNumberIntentHandler.call(this);
   },
@@ -106,6 +108,10 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
   "ReadDescriptionIntent": function(){
     this.handler.state = states.DESCRIPTION;
     ReadDescriptionIntentHandler.call(this);
+  },
+
+  "SearchByTopicIntent": function(){
+    SearchByTopicIntentHandler.call(this);
   },
 
   "Unhandled": function() {
@@ -127,8 +133,8 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
     if(this.attributes.currentEpisodeInfo){
       var title = this.attributes.currentEpisodeInfo.title;
-      console.log(title.substr(1, title.indexOf(':')));
-      PlayEpisodeIntentHandler.call(title.substr(1, title.indexOf(':')));
+      // console.log(title.substr(1, title.indexOf(':')));
+      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
     } else {
       this.emit(":tell", "Sorry, I couldn't play this episode. ");
     }
@@ -165,7 +171,7 @@ var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
 
     if(this.attributes.currentEpisodeInfo){
       var title = this.attributes.currentEpisodeInfo.title;
-      PlayEpisodeIntentHandler.call(title.substr(1, title.indexOf(':')));
+      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
     } else {
       this.emit(":tell", "Sorry, I couldn't play this episode. ");
     }
@@ -186,58 +192,43 @@ var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
 });
 
 
-// function searchDatabase(dataset, searchQuery, searchType) {
-//   var matchFound = false;
-//   var results = [];
-//
-//   //beginning search
-//   for (var i = 0; i < dataset.length; i++) {
-//     if (searchQuery === dataset[i][searchType]) {
-//       results.push(dataset[i]);
-//       matchFound = true;
-//     }
-//     if ((i == dataset.length - 1) && (matchFound === false)) {
-//       //this means that we are on the last record, and no match was found
-//       matchFound = false;
-//
-//     }
-//   }
-//   return {
-//     count: results.length,
-//     results: results
-//   };
-// }
-
-
 // =====================================================================================================
 // --------------------------------- Section 3. Intent Handlers  ---------------------------------
 // =====================================================================================================
 
 function SearchByEpisodeNumberIntentHandler(){
-
-  var episodeNumber = parseInt(this.event.request.intent.slots.episodeNumber.value);
+  var episodeNumber = this.event.request.intent.slots.episodeNumber.value;
+  var query = "title:" + episodeNumber;
   var that = this;
 
-  audiosearch.searchEpisodes("show_id:27").then(function (results) {
-
+  audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
     if (results.total_results !== 0) {
-
       Object.assign(that.attributes, {
         "STATE": states.DESCRIPTION,
         "currentEpisodeInfo": results.results[0]
         }
       );
-
       var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + DESCRIPTION_STATE_HELP_MESSAGE;
       that.emit(":ask", speechOutput);
-
     } else {
       var output = "no results found";
       that.emit(":ask", output);
     }
+  });
+}
 
-  }
-);
+function SearchByTopicIntentHandler(){
+  var topic1 = "";
+  var topic2 = "";
+  var topic3 = "";
+  var query = "";
+
+  var that = this;
+
+  audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
+
+  });
+}
 }
 
 
@@ -245,15 +236,14 @@ function ReadDescriptionIntentHandler(){
   // get 'results' output to persist from the searchbyepisodenumberhandler
   // console.log(this.attributes.currentEpisodeInfo);
   var description = this.attributes.currentEpisodeInfo.description;
-  this.emit(":tell", description);
+  this.emit(":ask", description);
 }
+
 
 
 function PlayEpisodeIntentHandler(podcast){
   var playBehavior = 'REPLACE_ALL';
-  console.log(podcast);
   var podcastUrl = generatePodcastUrl(podcast);
-  console.log(podcastUrl);
   var token = "12345";
   var offsetInMilliseconds = 0;
 
@@ -261,6 +251,8 @@ function PlayEpisodeIntentHandler(podcast){
   this.emit(':responseReady');
 
 }
+
+
 
 // =====================================================================================================
 // --------------------------------- Section 3. generate messages  ---------------------------------

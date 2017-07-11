@@ -15,8 +15,6 @@ var secret_key = "84aace8da93607e7d3098a0b13e479e0fb083f976a799f19cfd2fa0ab311c1
 var audiosearch = new Audiosearch(app_id, secret_key);
 
 
-
-
 exports.handler = function(event, context, callback){
   var alexa = Alexa.handler(event, context, callback);
   alexa.registerHandlers(launchHandlers, startSearchHandlers, descriptionHandlers, streamModeHandlers);
@@ -36,6 +34,9 @@ var NEW_SEARCH_MESSAGE = getGenericHelpMessage(data);
 var DESCRIPTION_STATE_HELP_MESSAGE = "Here are some things you can say: find episode, or tell me about the episode";
 
 var SHUTDOWN_MESSAGE = "Ok.";
+
+var NEXT_THREE_RESULTS = "The next three results are: ";
+
 
 
 // =====================================================================================================
@@ -71,6 +72,10 @@ var launchHandlers = {
       this.emit(":tell", "You haven't specified an episode");
     }
   },
+  //
+  // "NewSessionIntent": function(){
+  //   NewSessionIntentHandler.call(this);
+  // },
 
   "Unhandled": function() {
     this.emit(":ask", getGenericHelpMessage(data));
@@ -85,20 +90,14 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
   "AMAZON.NoIntent": function() {
     this.emit(":tell", SHUTDOWN_MESSAGE);
   },
-  "AMAZON.RepeatIntent": function() {
-    var output;
-    if(this.attributes.currentEpisodeInfo){
-      SearchByEpisodeNumberIntentHandler.call(this.attributes.results[0].number);
-      // console.log("repeating last speech");
-    }
-    else{
-      output = getGenericHelpMessage(data);
-      // console.log("no last speech availble. outputting standard help message.");
-    }
-    this.emit(":ask",output, output);
-  },
+  // "AMAZON.RepeatIntent": function() {
+  //
+  // },
 
   ///////////// custom intents //////////////
+  // "NewSessionIntent": function(){
+  //   NewSessionIntentHandler.call(this);
+  // },
 
   "SearchByEpisodeNumberIntent": function() {
     SearchByEpisodeNumberIntentHandler.call(this);
@@ -140,10 +139,14 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
     }
   },
 
-  //handle "new search" intent
   "SearchByEpisodeNumberIntent": function() {
     SearchByEpisodeNumberIntentHandler.call(this);
   },
+
+  // "NewSessionIntent": function(){
+  //   NewSessionIntentHandler.call(this);
+  // },
+
 
   "AMAZON.RepeatIntent": function() {
     var output;
@@ -206,30 +209,48 @@ function SearchByEpisodeNumberIntentHandler(){
       Object.assign(that.attributes, {
         "STATE": states.DESCRIPTION,
         "currentEpisodeInfo": results.results[0]
-        }
-      );
-      var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + DESCRIPTION_STATE_HELP_MESSAGE;
-      that.emit(":ask", speechOutput);
-    } else {
-      var output = "no results found";
-      that.emit(":ask", output);
-    }
-  });
+      }
+    );
+    var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + DESCRIPTION_STATE_HELP_MESSAGE;
+    that.emit(":ask", speechOutput);
+  } else {
+    var output = "no results found";
+    that.emit(":ask", output);
+  }
+});
 }
 
 function SearchByTopicIntentHandler(){
-  var topic1 = "";
-  var topic2 = "";
-  var topic3 = "";
-  var query = "";
+  var searchTopic = this.event.request.intent.slots.searchTopic.value;
+  var query = "topic:" + searchTopic;
 
   var that = this;
 
   audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
+    if (results.total_results !== 0){
+      Object.assign(that.attributes, {
+        "STATE": states.DESCRIPTION,
+        "searchByTopicResults": results.results
+      }
+    );
 
-  });
+    var resultOne = that.attributes.searchByTopicResults[0].title;
+    var resultTwo = that.attributes.searchByTopicResults[1].title;
+    var resultThree = that.attributes.searchByTopicResults[2].title;
+
+
+    var resultOutput = "I found some interesting episodes like " + resultOne + ", or" + resultTwo + ", or" + resultThree + ".";
+    var intentChoices = "You can say something like: play episode" + resultOne.substr(1, resultOne.indexOf(':')-1) + "Or 'Next Three Results'" + "or 'New Session'";
+
+
+    that.emit(":ask", resultOutput + intentChoices);
+  }
+
+});
 }
-}
+//SearchByEntityIntentHandler
+
+//SearchRelatedEpisodesIntentHandler
 
 
 function ReadDescriptionIntentHandler(){

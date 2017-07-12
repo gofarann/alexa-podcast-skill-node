@@ -17,7 +17,7 @@ var audiosearch = new Audiosearch(app_id, secret_key);
 
 exports.handler = function(event, context, callback){
   var alexa = Alexa.handler(event, context, callback);
-  alexa.registerHandlers(launchHandlers, startSearchHandlers, descriptionHandlers, streamModeHandlers);
+  alexa.registerHandlers(launchHandlers, startSearchHandlers, descriptionHandlers, streamModeHandlers, multipleResultsHandlers);
   alexa.execute();
 };
 
@@ -201,6 +201,28 @@ var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
 
 });
 
+var multipleResultsHandlers = Alexa.CreateStateHandler(states.MULTIPLE_RESULTS_MODE, {
+  "NextResultIntent": function(){
+    SearchByTopicIntentHandler.call(this);
+  },
+
+  "ReadDescriptionIntent": function(){
+
+  },
+
+  "Unhandled": function(){
+    this.emit(":ask", "Sorry, I couldn't stream this episode." + getGenericHelpMessage(data));
+  },
+
+  "NewSessionIntent": function(){
+
+  }
+
+
+
+});
+
+
 
 // =====================================================================================================
 // --------------------------------- Section 3. Intent Handlers  ---------------------------------
@@ -228,27 +250,49 @@ function SearchByEpisodeNumberIntentHandler(){
 }
 
 function SearchByTopicIntentHandler(){
-  var searchTopic = this.event.request.intent.slots.searchTopic.value;
-  var query = searchTopic;
+  this.handler.state = states.MULTIPLE_RESULTS_MODE;
+
+  if(this.attributes.searchQuery === undefined){
+    // do this when this is the first search
+    var searchTopic = this.event.request.intent.slots.searchTopic;
+
+    Object.assign(this.attributes, {
+      "searchQuery": searchTopic
+    });
+  } else {
+    // do this when there is an existing searchQuery in the attributes
+    // nothing because there is already a searchTopic attribute
+  }
+
+  if(this.attributes.onResult !== undefined){
+    // do this when this is NOT the first search
+    var count = this.attributes.onResult + 1;
+    Object.assign(this.attributes, {
+      "onResult": count
+    });
+  } else {
+    // do this when this is the first search
+    Object.assign(this.attributes, {
+      "onResult": 1
+    });
+  }
+
 
   var that = this;
 
-  audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
-    var resultNum = 0;
+
+  audiosearch.searchEpisodes(that.attributes.searchQuery.value, {"filters[show_id]":27, "size":1, "from":that.attributes.onResult}).then(function (results) {
 
     if (results.total_results !== 0){
       Object.assign(that.attributes, {
         "STATE": states.MULTIPLE_RESULTS_MODE,
-        "searchByTopicResults": results.results,
-        "currentEpisodeInfo": results.results[resultNum]
+        "currentEpisodeInfo": results.results[0],
         }
       );
 
       var episodeTitle = that.attributes.currentEpisodeInfo.title;
-      resultNum += 1;
-
-      var resultOutput = "I found this interesting episode: " + episodeTitle;
-      var intentChoices = "You can say 'Give me the description', 'Play This Episode', or 'Next Result'";
+      var resultOutput = "I found this episode: " + episodeTitle + ".";
+      var intentChoices = " You can say 'Description', 'Play This Episode', or 'Next Result'";
 
       var speechOutput = resultOutput + intentChoices;
 

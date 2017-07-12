@@ -44,18 +44,19 @@ var NEXT_THREE_RESULTS = "The next three results are: ";
 // =====================================================================================================
 
 var states = {
-  SEARCHMODE: "_SEARCHMODE",
+  SEARCH_MODE: "_SEARCH_MODE",
   DESCRIPTION: "_DESCRIPTION",
-  STREAM_MODE: "_STREAM_MODE"
+  STREAM_MODE: "_STREAM_MODE",
+  MULTIPLE_RESULTS_MODE: "_MULTIPLE_RESULTS_MODE"
 };
 
 var launchHandlers = {
   'LaunchRequest': function () {
-    this.handler.state = states.SEARCHMODE;
     this.emit(':ask', WELCOME_MESSAGE + getGenericHelpMessage(data));
   },
 
   "SearchByEpisodeNumberIntent": function() {
+    this.handler.state = states.SEARCH_MODE;
     SearchByEpisodeNumberIntentHandler.call(this);
   },
 
@@ -77,13 +78,19 @@ var launchHandlers = {
   //   NewSessionIntentHandler.call(this);
   // },
 
+  "SearchByTopicIntent": function(){
+    this.handler.state = states.SEARCH_MODE;
+    SearchByTopicIntentHandler.call(this);
+  },
+
+
   "Unhandled": function() {
     this.emit(":ask", getGenericHelpMessage(data));
   }
 
 };
 
-var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
+var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   "AMAZON.YesIntent": function() {
     this.emit(":ask", NEW_SEARCH_MESSAGE, NEW_SEARCH_MESSAGE);
   },
@@ -222,29 +229,36 @@ function SearchByEpisodeNumberIntentHandler(){
 
 function SearchByTopicIntentHandler(){
   var searchTopic = this.event.request.intent.slots.searchTopic.value;
-  var query = "topic:" + searchTopic;
+  var query = searchTopic;
 
   var that = this;
 
   audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
+    var resultNum = 0;
+
     if (results.total_results !== 0){
       Object.assign(that.attributes, {
-        "STATE": states.DESCRIPTION,
-        "searchByTopicResults": results.results
-      }
-    );
+        "STATE": states.MULTIPLE_RESULTS_MODE,
+        "searchByTopicResults": results.results,
+        "currentEpisodeInfo": results.results[resultNum]
+        }
+      );
 
-    var resultOne = that.attributes.searchByTopicResults[0].title;
-    var resultTwo = that.attributes.searchByTopicResults[1].title;
-    var resultThree = that.attributes.searchByTopicResults[2].title;
+      var episodeTitle = that.attributes.currentEpisodeInfo.title;
+      resultNum += 1;
 
+      var resultOutput = "I found this interesting episode: " + episodeTitle;
+      var intentChoices = "You can say 'Give me the description', 'Play This Episode', or 'Next Result'";
 
-    var resultOutput = "I found some interesting episodes like " + resultOne + ", or" + resultTwo + ", or" + resultThree + ".";
-    var intentChoices = "You can say something like: play episode" + resultOne.substr(1, resultOne.indexOf(':')-1) + "Or 'Next Three Results'" + "or 'New Session'";
+      var speechOutput = resultOutput + intentChoices;
 
+      that.emit(":ask", speechOutput);
 
-    that.emit(":ask", resultOutput + intentChoices);
-  }
+    } else {
+
+      var output = "Sorry, I couldn't find an episode on that topic. You can say 'New Session' to start a new search";
+      that.emit(":ask", output);
+    }
 
 });
 }

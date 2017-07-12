@@ -8,11 +8,9 @@ var appID = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
 // --------------------------------- Audiosear.ch API Setup ---------------------------------
 // =====================================================================================================
 
-// should move this to a .env and git ignore ... don't know how to do that right now
 var MyData = {};
 var Audiosearch = require('audiosearch-client-node');
-// var app_id = "1cd25a65f3590902e56dd4d4a398cdbb66cb807b4e81e0fc2172e4956af3a2ac";
-// var secret_key = "84aace8da93607e7d3098a0b13e479e0fb083f976a799f19cfd2fa0ab311c18f";
+
 
 var app_id = process.env.APP_ID;
 var secret_key =  process.env.SECRET_KEY;
@@ -58,7 +56,7 @@ var states = {
 
 var launchHandlers = {
   'LaunchRequest': function () {
-    this.emit(':ask', WELCOME_MESSAGE + getGenericHelpMessage(data));
+    this.emit(':ask', WELCOME_MESSAGE + getGenericHelpMessage());
 
   },
 
@@ -170,13 +168,13 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
       output = this.attributes.currentEpisodeInfo.description;
     }
     else{
-      output = "I can't recall what I said before" + getGenericHelpMessage(data);
+      output = "I can't recall what I said before" + getGenericHelpMessage();
     }
     this.emit(":ask", output);
   },
 
   "Unhandled": function(){
-    this.emit(":ask", "Sorry, I don't understand that request. " + getGenericHelpMessage(data));
+    this.emit(":ask", "Sorry, I don't understand that request. " + getGenericHelpMessage());
   }
 
 });
@@ -373,7 +371,7 @@ function PlayEpisodeIntentHandler(podcast){
 // =====================================================================================================
 // --------------------------------- Section 3. generate messages  ---------------------------------
 // =====================================================================================================
-function getGenericHelpMessage(data){
+function getGenericHelpMessage(){
   var sentences = ["ask - play episode " + getRandomEpisodeNumber(1, 500)];
   return "You can " + sentences;
 }

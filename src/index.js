@@ -1,6 +1,7 @@
 'use strict';
 var Alexa = require('alexa-sdk');
-var data = require('./data');
+require('dotenv').config();
+
 var appID = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
 
 // =====================================================================================================
@@ -10,8 +11,13 @@ var appID = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
 // should move this to a .env and git ignore ... don't know how to do that right now
 var MyData = {};
 var Audiosearch = require('audiosearch-client-node');
-var app_id = "1cd25a65f3590902e56dd4d4a398cdbb66cb807b4e81e0fc2172e4956af3a2ac";
-var secret_key = "84aace8da93607e7d3098a0b13e479e0fb083f976a799f19cfd2fa0ab311c18f";
+// var app_id = "1cd25a65f3590902e56dd4d4a398cdbb66cb807b4e81e0fc2172e4956af3a2ac";
+// var secret_key = "84aace8da93607e7d3098a0b13e479e0fb083f976a799f19cfd2fa0ab311c18f";
+
+var app_id = process.env.APP_ID;
+var secret_key =  process.env.SECRET_KEY;
+
+
 var audiosearch = new Audiosearch(app_id, secret_key);
 
 

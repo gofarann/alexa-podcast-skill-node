@@ -82,6 +82,10 @@ var launchHandlers = {
 
   "Unhandled": function() {
     this.emit(":ask", UNHANDELED_MESSAGE + NEW_SEARCH_MESSAGE);
+  },
+
+  "SearchByDateCreatedIntent": function(){
+    SearchByDateCreatedIntentHandler.call(this);
   }
 
 };
@@ -91,6 +95,10 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   ///////////// custom intents //////////////
   "NewSessionIntent": function(){
     NewSessionIntentHandler.call(this);
+  },
+
+  "SearchByDateCreatedIntent": function(){
+    SearchByDateCreatedIntentHandler.call(this);
   },
 
   "SearchByEpisodeNumberIntent": function() {
@@ -110,6 +118,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   "Unhandled": function() {
     this.emit(":ask", NEW_SEARCH_MESSAGE);
   },
+  
 
   "PlayEpisodeIntent": function(){
     if(this.attributes.currentEpisodeInfo){
@@ -232,11 +241,11 @@ var multipleResultsHandlers = Alexa.CreateStateHandler(states.MULTIPLE_RESULTS_M
   "NewSessionIntent": function(){
     this.handler.state = states.SEARCH_MODE;
 
-    Object.assign(that.attributes, {
+    Object.assign(this.attributes, {
       "onResult": undefined
     });
 
-    ReadDescriptionIntentHandler.call(this);
+    NewSessionIntentHandler.call(this);
 
   },
 
@@ -346,13 +355,50 @@ function PlayEpisodeIntentHandler(podcast){
 }
 
 function NewSessionIntentHandler(){
-  // reset all attributes
-  // console.log(this.attributes);
+
   Object.assign(this.attributes, {
     "currentEpisodeInfo": {}
   });
-  // console.log(this.attributes);
-  this.emit(":ask", "You've started a new session. " +  SEARCH_MODE_HELP_MESSAGE)
+  this.emit(":ask", "You've started a new session. " +  SEARCH_MODE_HELP_MESSAGE);
+
+}
+
+function SearchByDateCreatedIntentHandler(){
+  this.handler.state = states.SEARCH_MODE;
+
+  var searchDate = this.event.request.intent.slots.dateCreated;
+  Object.assign(this.attributes, {
+    "dateQuery": searchDate
+  });
+
+
+  console.log(this.attributes.dateQuery);
+  var query = "date_created:" + closestSundayBefore(this.attributes.dateQuery.value);
+  console.log(query);
+
+  var that = this;
+
+  audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
+    if (results.total_results !== 0){
+      Object.assign(that.attributes, {
+        "currentEpisodeInfo": results.results[0],
+        }
+      );
+
+      var episodeTitle = that.attributes.currentEpisodeInfo.title;
+      var resultOutput = "I found this episode: " + episodeTitle + ".";
+      var intentChoices = " You can say 'Description', 'Play This Episode'";
+
+      var speechOutput = resultOutput + intentChoices;
+
+      that.emit(":ask", speechOutput);
+
+    } else {
+
+      var output = "Sorry, I couldn't find an episode based on that date. You can say 'New Session' to start a new search";
+      that.emit(":ask", output);
+    }
+  });
 
 }
 
@@ -365,7 +411,7 @@ function getGenericHelpMessage(){
 }
 
 // =====================================================================================================
-// ------------------------------------ Section 4.  Functions  -----------------------------------
+// ------------------------------------ Section 4.  Helper Functions  -----------------------------------
 // =====================================================================================================
 
 function getRandomEpisodeNumber(min, max) {
@@ -379,4 +425,28 @@ function generatePodcastUrl(episodeNumber) {
   else {
     return "https://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
   }
+}
+
+function closestSundayBefore(dateQuery) {
+  var d = new Date(dateQuery);
+
+  if (d.getDay() !== 0){
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    var sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    return formatDate(sunday);
+  } else {
+    return formatDate(d);
+  }
+}
+
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join('-');
 }

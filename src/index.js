@@ -13,7 +13,7 @@ exports.handler = function(event, context, callback){
 };
 
 // =====================================================================================================
-// --------------------------------- Audiosear.ch API Setup ---------------------------------
+// --------------------------------- Audiosear.ch API Setup --------------------------------------------
 // =====================================================================================================
 
 var Audiosearch = require('audiosearch-client-node');
@@ -35,7 +35,7 @@ var STREAM_MODE_HELP_MESSAGE = "";
 var MULTIPLE_RESULTS_MODE_HELP_MESSAGE = "";
 
 var SHUTDOWN_MESSAGE = "Ok.";
-var UNHANDELED_MESSAGE = "I'm not sure what that means";
+var UNHANDELED_MESSAGE = "I'm not sure what that means, ";
 
 
 var NEW_SEARCH_MESSAGE = "You can say 'New Session' to start a new search";
@@ -86,6 +86,10 @@ var launchHandlers = {
 
   "SearchByDateCreatedIntent": function(){
     SearchByDateCreatedIntentHandler.call(this);
+  },
+
+  'AMAZON.StopIntent': function () {
+    this.emit(":tell", "Ok.");
   }
 
 };
@@ -118,7 +122,11 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   "Unhandled": function() {
     this.emit(":ask", NEW_SEARCH_MESSAGE);
   },
-  
+
+  'AMAZON.StopIntent': function () {
+    this.emit(":tell", "Ok.");
+  },
+
 
   "PlayEpisodeIntent": function(){
     if(this.attributes.currentEpisodeInfo){
@@ -128,158 +136,168 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     } else {
       this.emit(":tell", "Sorry, I couldn't play this episode. " + SEARCH_MODE_HELP_MESSAGE);
     }  }
-});
+  });
 
 
-var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
+  var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
 
-  "ReadDescriptionIntent": function(){
-    this.handler.state = states.DESCRIPTION;
-    ReadDescriptionIntentHandler.call(this);
-  },
+    "ReadDescriptionIntent": function(){
+      this.handler.state = states.DESCRIPTION;
+      ReadDescriptionIntentHandler.call(this);
+    },
 
-  // handle "play episode" intent
-  "PlayEpisodeIntent": function() {
+    // handle "play episode" intent
+    "PlayEpisodeIntent": function() {
 
-    if(this.attributes.currentEpisodeInfo){
-      var title = this.attributes.currentEpisodeInfo.title;
-      // console.log(title.substr(1, title.indexOf(':')));
-      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
-    } else {
-      this.emit(":tell", "Sorry, you have to search for an episode first before playing it.");
-    }
-  },
-
-  "NewSessionIntent": function(){
-    this.handler.state = states.SEARCH_MODE;
-    NewSessionIntentHandler.call(this);
-  },
-
-
-  "AMAZON.RepeatIntent": function() {
-    var output;
-    if(this.attributes.currentEpisodeInfo.description){
-      output = this.attributes.currentEpisodeInfo.description;
-    }
-    else {
-      output = "I can't recall what I said before" + getGenericHelpMessage();
-    }
-    this.emit(":ask", output);
-  },
-
-  "Unhandled": function(){
-    this.emit(":ask", "Sorry, I don't understand that request. " + getGenericHelpMessage());
-  }
-
-});
-
-var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
-
-  "PlayEpisodeIntent": function() {
-
-    if(this.attributes.currentEpisodeInfo){
-      var title = this.attributes.currentEpisodeInfo.title;
-      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
-    } else {
-      this.emit(":tell", "Sorry, I couldn't play this episode. ");
-    }
-  },
-
-  "AMAZON.PauseIntent": function(){
-    this.response.audioPlayerStop();
-    this.response.speak('Paused.');
-    this.emit(':responseReady');
-
-  },
-
-  "AMAZON.ResumeIntent": function(){
-    this.response.audioPlayerPlay();
-    this.response.speak('Resuming episode.');
-    this.emit(':responseReady');
-  },
-
-  "AMAZON.StartOver": function(){
-    var title = this.attributes.currentEpisodeInfo.title;
-    PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
-  },
-
-  "AMAZON.StopIntent": function(){
-    this.response.audioPlayerStop();
-  },
-
-  "Unhandled": function(){
-    this.emit(":ask", "Sorry, I couldn't stream this episode. " + NEW_SEARCH_MESSAGE);
-  },
-
-  "NewSessionIntent": function(){
-    this.handler.state = states.SEARCH_MODE;
-    NewSessionIntentHandler.call(this);
-  },
-
-
-  "ReadDescriptionIntent": function(){
-    this.handler.state = states.DESCRIPTION;
-    ReadDescriptionIntentHandler.call(this);
-  },
-
-
-});
-
-var multipleResultsHandlers = Alexa.CreateStateHandler(states.MULTIPLE_RESULTS_MODE, {
-  "NextResultIntent": function(){
-    SearchByTopicIntentHandler.call(this);
-  },
-
-  "ReadDescriptionIntent": function(){
-    ReadDescriptionIntentHandler.call(this);
-  },
-
-  "Unhandled": function(){
-    this.emit(":ask", " You can say 'Description', 'Play This Episode', or 'Next Result'");
-  },
-
-  "NewSessionIntent": function(){
-    this.handler.state = states.SEARCH_MODE;
-
-    Object.assign(this.attributes, {
-      "onResult": undefined
-    });
-
-    NewSessionIntentHandler.call(this);
-
-  },
-
-  "PlayEpisodeIntent": function(){
-    var title = this.attributes.currentEpisodeInfo.title;
-    PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
-  },
-
-
-});
-
-// =====================================================================================================
-// --------------------------------- Section 3. Intent Handlers  ---------------------------------
-// =====================================================================================================
-
-function SearchByEpisodeNumberIntentHandler(){
-  var episodeNumber = this.event.request.intent.slots.episodeNumber.value;
-  var query = "title:" + episodeNumber;
-  var that = this;
-
-  audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
-    if (results.total_results !== 0) {
-      Object.assign(that.attributes, {
-        "STATE": states.DESCRIPTION,
-        "currentEpisodeInfo": results.results[0]
+      if(this.attributes.currentEpisodeInfo){
+        var title = this.attributes.currentEpisodeInfo.title;
+        // console.log(title.substr(1, title.indexOf(':')));
+        PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
+      } else {
+        this.emit(":tell", "Sorry, you have to search for an episode first before playing it.");
       }
-    );
-    var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + "." + DESCRIPTION_MODE_HELP_MESSAGE;
-    that.emit(":ask", speechOutput);
-  } else {
-    var output = "no results found";
-    that.emit(":ask", output);
-  }
-});
+    },
+
+    "NewSessionIntent": function(){
+      this.handler.state = states.SEARCH_MODE;
+      NewSessionIntentHandler.call(this);
+    },
+
+
+    "AMAZON.RepeatIntent": function() {
+      var output;
+      if(this.attributes.currentEpisodeInfo.description){
+        output = this.attributes.currentEpisodeInfo.description;
+      }
+      else {
+        output = "I can't recall what I said before" + DESCRIPTION_MODE_HELP_MESSAGE;
+      }
+      this.emit(":ask", output);
+    },
+
+    "Unhandled": function(){
+      this.emit(":ask", "Sorry, I don't understand that request. " + DESCRIPTION_MODE_HELP_MESSAGE);
+    },
+
+    'AMAZON.StopIntent': function () {
+      this.emit(":tell", "Ok.");
+    }
+
+
+  });
+
+  var streamModeHandlers = Alexa.CreateStateHandler(states.STREAM_MODE, {
+
+    "PlayEpisodeIntent": function() {
+
+      if(this.attributes.currentEpisodeInfo){
+        var title = this.attributes.currentEpisodeInfo.title;
+        PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
+      } else {
+        this.emit(":tell", "Sorry, I couldn't play this episode. ");
+      }
+    },
+
+    "AMAZON.PauseIntent": function(){
+      this.response.audioPlayerStop();
+      this.response.speak('Paused.');
+      this.emit(':responseReady');
+
+    },
+
+    "AMAZON.ResumeIntent": function(){
+      this.response.audioPlayerPlay();
+      this.response.speak('Resuming episode.');
+      this.emit(':responseReady');
+    },
+
+    "AMAZON.StartOver": function(){
+      var title = this.attributes.currentEpisodeInfo.title;
+      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
+    },
+
+    "AMAZON.StopIntent": function(){
+      this.response.audioPlayerStop();
+    },
+
+    "Unhandled": function(){
+      this.emit(":ask", "Sorry, I couldn't stream this episode. " + NEW_SEARCH_MESSAGE);
+    },
+
+    "NewSessionIntent": function(){
+      this.handler.state = states.SEARCH_MODE;
+      NewSessionIntentHandler.call(this);
+    },
+
+
+    "ReadDescriptionIntent": function(){
+      this.handler.state = states.DESCRIPTION;
+      ReadDescriptionIntentHandler.call(this);
+    },
+
+
+  });
+
+  var multipleResultsHandlers = Alexa.CreateStateHandler(states.MULTIPLE_RESULTS_MODE, {
+    "NextResultIntent": function(){
+      SearchByTopicIntentHandler.call(this);
+    },
+
+    "ReadDescriptionIntent": function(){
+      ReadDescriptionIntentHandler.call(this);
+    },
+
+    "Unhandled": function(){
+      this.emit(":ask", " You can say 'Description', 'Play This Episode', or 'Next Result'");
+    },
+
+    "NewSessionIntent": function(){
+      this.handler.state = states.SEARCH_MODE;
+
+      Object.assign(this.attributes, {
+        "onResult": undefined
+      });
+
+      NewSessionIntentHandler.call(this);
+
+    },
+
+    "PlayEpisodeIntent": function(){
+      var title = this.attributes.currentEpisodeInfo.title;
+      PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
+    },
+
+    'AMAZON.StopIntent': function () {
+      this.emit(":tell", "Ok.");
+    }
+
+
+
+  });
+
+  // =====================================================================================================
+  // --------------------------------- Section 3. Intent Handlers  ---------------------------------------
+  // =====================================================================================================
+
+  function SearchByEpisodeNumberIntentHandler(){
+    var episodeNumber = this.event.request.intent.slots.episodeNumber.value;
+    var query = "title:" + episodeNumber;
+    var that = this;
+
+    audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
+      if (results.total_results !== 0) {
+        Object.assign(that.attributes, {
+          "STATE": states.DESCRIPTION,
+          "currentEpisodeInfo": results.results[0]
+        }
+      );
+      var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + "." + DESCRIPTION_MODE_HELP_MESSAGE;
+      that.emit(":ask", speechOutput);
+    } else {
+      var output = "no results found";
+      that.emit(":ask", output);
+    }
+  });
 }
 
 function SearchByTopicIntentHandler(){
@@ -317,23 +335,23 @@ function SearchByTopicIntentHandler(){
       Object.assign(that.attributes, {
         "STATE": states.MULTIPLE_RESULTS_MODE,
         "currentEpisodeInfo": results.results[0],
-        }
-      );
+      }
+    );
 
-      var episodeTitle = that.attributes.currentEpisodeInfo.title;
-      var resultOutput = "I found this episode: " + episodeTitle + ".";
-      var intentChoices = " You can say 'Description', 'Play This Episode', or 'Next Result'";
+    var episodeTitle = that.attributes.currentEpisodeInfo.title;
+    var resultOutput = "I found this episode: " + episodeTitle + ".";
+    var intentChoices = " You can say 'Description', 'Play This Episode', or 'Next Result'";
 
-      var speechOutput = resultOutput + intentChoices;
+    var speechOutput = resultOutput + intentChoices;
 
-      that.emit(":ask", speechOutput);
+    that.emit(":ask", speechOutput);
 
-    } else {
+  } else {
 
-      var output = "Sorry, I couldn't find an episode on that topic. You can say 'New Session' to start a new search";
-      that.emit(":ask", output);
-    }
-  });
+    var output = "Sorry, I couldn't find an episode on that topic. You can say 'New Session' to start a new search";
+    that.emit(":ask", output);
+  }
+});
 }
 
 function ReadDescriptionIntentHandler(){
@@ -365,53 +383,76 @@ function NewSessionIntentHandler(){
 
 function SearchByDateCreatedIntentHandler(){
   this.handler.state = states.SEARCH_MODE;
+  var searchDate;
 
-  var searchDate = this.event.request.intent.slots.dateCreated;
-  Object.assign(this.attributes, {
-    "dateQuery": searchDate
-  });
+  // this handles if the return is a week of the year
+  var userDateInput = this.event.request.intent.slots.dateCreated.value;
+
+  if (userDateInput.includes("W") === true){
+    var wk = Number(userDateInput.slice(-2));
+    var yr = Number(userDateInput.substring(0,4));
+    console.log(wk + ":" + yr);
+    searchDate = String(getDateOfWeek(wk, yr));
+    console.log(searchDate);
+
+    Object.assign(this.attributes, {
+      "dateQuery": searchDate
+    });
+
+  } else {
+     searchDate = this.event.request.intent.slots.dateCreated.value;
+     Object.assign(this.attributes, {
+       "dateQuery": searchDate
+     });
+  }
 
 
-  console.log(this.attributes.dateQuery);
-  var query = "date_created:" + closestSundayBefore(this.attributes.dateQuery.value);
-  console.log(query);
+  console.log("monday datequery" + this.attributes.dateQuery);
+
+  var query = "date_created:" + closestMondayBefore(this.attributes.dateQuery);
+  console.log("mondy query" + query);
+
 
   var that = this;
 
   audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
-    if (results.total_results !== 0){
-      Object.assign(that.attributes, {
-        "currentEpisodeInfo": results.results[0],
-        }
-      );
+    if (results.total_results === 0) {
+      var query = "date_created:" + closestSundayBefore(that.attributes.dateQuery);
+      console.log("sunday" + that.attributes.dateQuery);
+      console.log("sunday query" + query);
 
-      var episodeTitle = that.attributes.currentEpisodeInfo.title;
-      var resultOutput = "I found this episode: " + episodeTitle + ".";
-      var intentChoices = " You can say 'Description', 'Play This Episode'";
 
-      var speechOutput = resultOutput + intentChoices;
+      audiosearch.searchEpisodes(query,{"filters[show_id]":27}).then(function (results) {
+        if (results.total_results !== 0){
+          Object.assign(that.attributes, {
+            "currentEpisodeInfo": results.results[0],
+          }
+        );
+        var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+        that.emit(":ask", speechOutput);
 
-      that.emit(":ask", speechOutput);
+      } else {
+        var output = "Sorry, I couldn't find an episode based on that date. You can say 'New Session' to start a new search";
+        that.emit(":ask", output);
+      }
+    });
 
-    } else {
+  } else {
+    console.log(results);
 
-      var output = "Sorry, I couldn't find an episode based on that date. You can say 'New Session' to start a new search";
-      that.emit(":ask", output);
+    Object.assign(that.attributes, {
+      "currentEpisodeInfo": results.results[0],
+      }
+    );
+
+    var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+    that.emit(":ask", speechOutput);
+
     }
   });
-
 }
-
 // =====================================================================================================
-// --------------------------------- Section 3. generate messages  ---------------------------------
-// =====================================================================================================
-function getGenericHelpMessage(){
-  var sentences = ["ask - play episode " + getRandomEpisodeNumber(1, 500)];
-  return "You can " + sentences;
-}
-
-// =====================================================================================================
-// ------------------------------------ Section 4.  Helper Functions  -----------------------------------
+// ------------------------------------ Section 3.  Helper Functions  ----------------------------------
 // =====================================================================================================
 
 function getRandomEpisodeNumber(min, max) {
@@ -439,14 +480,35 @@ function closestSundayBefore(dateQuery) {
   }
 }
 
+function closestMondayBefore(dateQuery) {
+  var d = new Date(dateQuery);
+
+  if (d.getDay() !== 0){
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return formatDate(monday);
+  } else {
+    return formatDate(d);
+  }
+}
+
+function getDateOfWeek(w, y) {
+    var d = (1 + (w - 1) * 7); // 1st of January + 7 days for each week
+    return formatDate(new Date(y, 0, d));
+}
+
 function formatDate(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
+  var d = new Date(date),
+  month = '' + (d.getMonth() + 1),
+  day = '' + d.getDate(),
+  year = d.getFullYear();
 
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
+  if (month.length < 2) month = '0' + month;
+  if (day.length < 2) day = '0' + day;
 
-    return [year, month, day].join('-');
+  return [year, month, day].join('-');
+}
+
+function generateResultSpeechOutput(title){
+  return "I found this episode: " + title + "." + " You can say 'Description', 'Play This Episode'";
 }

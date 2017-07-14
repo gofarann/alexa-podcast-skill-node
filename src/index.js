@@ -338,17 +338,12 @@ function SearchByTopicIntentHandler(){
       }
     );
 
-    var episodeTitle = that.attributes.currentEpisodeInfo.title;
-    var resultOutput = "I found this episode: " + episodeTitle + ".";
-    var intentChoices = " You can say 'Description', 'Play This Episode', or 'Next Result'";
-
-    var speechOutput = resultOutput + intentChoices;
-
+    var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
     that.emit(":ask", speechOutput);
 
   } else {
 
-    var output = "Sorry, I couldn't find an episode on that topic. You can say 'New Session' to start a new search";
+    var output = "Sorry, I couldn't find an episode on that topic. " + NEW_SEARCH_MESSAGE;
     that.emit(":ask", output);
   }
 });
@@ -391,9 +386,7 @@ function SearchByDateCreatedIntentHandler(){
   if (userDateInput.includes("W") === true){
     var wk = Number(userDateInput.slice(-2));
     var yr = Number(userDateInput.substring(0,4));
-    console.log(wk + ":" + yr);
     searchDate = String(getDateOfWeek(wk, yr));
-    console.log(searchDate);
 
     Object.assign(this.attributes, {
       "dateQuery": searchDate
@@ -406,22 +399,12 @@ function SearchByDateCreatedIntentHandler(){
      });
   }
 
-
-  console.log("monday datequery" + this.attributes.dateQuery);
-
-  var query = "date_created:" + closestMondayBefore(this.attributes.dateQuery);
-  console.log("mondy query" + query);
-
-
+  var query = "date_created:" + closestSundayBefore(this.attributes.dateQuery);
   var that = this;
 
   audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
     if (results.total_results === 0) {
-      var query = "date_created:" + closestSundayBefore(that.attributes.dateQuery);
-      console.log("sunday" + that.attributes.dateQuery);
-      console.log("sunday query" + query);
-
-
+      var query = "date_created:" + closestMondayAfter(that.attributes.dateQuery);
       audiosearch.searchEpisodes(query,{"filters[show_id]":27}).then(function (results) {
         if (results.total_results !== 0){
           Object.assign(that.attributes, {
@@ -429,23 +412,23 @@ function SearchByDateCreatedIntentHandler(){
           }
         );
         var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+        console.log(speechOutput);
         that.emit(":ask", speechOutput);
 
       } else {
-        var output = "Sorry, I couldn't find an episode based on that date. You can say 'New Session' to start a new search";
+        var output = "Sorry, I couldn't find an episode based on that date. " + NEW_SEARCH_MESSAGE;
         that.emit(":ask", output);
       }
     });
 
   } else {
-    console.log(results);
-
     Object.assign(that.attributes, {
       "currentEpisodeInfo": results.results[0],
       }
     );
 
     var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+    console.log(speechOutput);
     that.emit(":ask", speechOutput);
 
     }
@@ -473,8 +456,22 @@ function closestSundayBefore(dateQuery) {
 
   if (d.getDay() !== 0){
     d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    // minus 1 gets the sunday
     var sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
     return formatDate(sunday);
+  } else {
+    return formatDate(d);
+  }
+}
+
+function closestMondayAfter(dateQuery) {
+  var d = new Date(dateQuery);
+
+  if (d.getDay() !== 1){
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    // plus 7 gets the monday week before
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7);
+    return formatDate(monday);
   } else {
     return formatDate(d);
   }
@@ -483,8 +480,9 @@ function closestSundayBefore(dateQuery) {
 function closestMondayBefore(dateQuery) {
   var d = new Date(dateQuery);
 
-  if (d.getDay() !== 0){
+  if (d.getDay() !== 1){
     d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    // plus 7 gets the monday week before
     var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     return formatDate(monday);
   } else {
@@ -492,8 +490,9 @@ function closestMondayBefore(dateQuery) {
   }
 }
 
+// this is going to always return sunday
 function getDateOfWeek(w, y) {
-    var d = (1 + (w - 1) * 7); // 1st of January + 7 days for each week
+    var d = (1 + (w - 1) * 7);
     return formatDate(new Date(y, 0, d));
 }
 

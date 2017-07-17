@@ -29,10 +29,11 @@ var skillName = "Alexa This American Life Lookup";
 
 var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. ";
 
-var DESCRIPTION_MODE_HELP_MESSAGE = "Here are some things you can say: 'play episode', or 'description'";
+var DESCRIPTION_MODE_HELP_MESSAGE = "Here are some things you can say: 'play this episode', or 'description'";
 var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number, topic, or date published";
 var STREAM_MODE_HELP_MESSAGE = "";
 var MULTIPLE_RESULTS_MODE_HELP_MESSAGE = "";
+var END_SESSION_MESSAGE = "End Session to exit";
 
 var SHUTDOWN_MESSAGE = "Ok.";
 var UNHANDELED_MESSAGE = "I'm not sure what that means, ";
@@ -81,19 +82,19 @@ var launchHandlers = {
   },
 
   "Unhandled": function() {
-    this.emit(":ask", UNHANDELED_MESSAGE + NEW_SEARCH_MESSAGE);
+    this.emit(":ask", UNHANDELED_MESSAGE + NEW_SEARCH_MESSAGE + "or" + END_SESSION_MESSAGE);
   },
 
   "SearchByDateCreatedIntent": function(){
     SearchByDateCreatedIntentHandler.call(this);
   },
 
-  'AMAZON.StopIntent': function () {
-    this.emit(":tell", "Ok.");
-  },
-
   'EndSessionIntent': function(){
     EndSessionIntentHandler.call(this);
+  },
+
+  "NewSessionIntent": function(){
+    NewSessionIntentHandler.call(this);
   }
 
 };
@@ -124,13 +125,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   },
 
   "Unhandled": function() {
-    this.emit(":ask", NEW_SEARCH_MESSAGE);
+    this.emit(":ask", UNHANDELED_MESSAGE + NEW_SEARCH_MESSAGE + "or" + END_SESSION_MESSAGE);
   },
-
-  'AMAZON.StopIntent': function () {
-    this.emit(":tell", "Ok.");
-  },
-
 
   "PlayEpisodeIntent": function(){
     if(this.attributes.currentEpisodeInfo){
@@ -167,6 +163,10 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
       NewSessionIntentHandler.call(this);
     },
 
+    'EndSessionIntent': function(){
+      EndSessionIntentHandler.call(this);
+    },
+
 
     "AMAZON.RepeatIntent": function() {
       var output;
@@ -180,13 +180,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     },
 
     "Unhandled": function(){
-      this.emit(":ask", "Sorry, I don't understand that request. " + DESCRIPTION_MODE_HELP_MESSAGE);
-    },
-
-    'AMAZON.StopIntent': function () {
-      this.emit(":tell", "Ok.");
+      this.emit(":ask", "Sorry, I don't understand that request. " + DESCRIPTION_MODE_HELP_MESSAGE + 'or' + END_SESSION_MESSAGE);
     }
-
 
   });
 
@@ -220,12 +215,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
       PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
     },
 
-    "AMAZON.StopIntent": function(){
-      this.response.audioPlayerStop();
-    },
-
     "Unhandled": function(){
-      this.emit(":ask", "Sorry, I couldn't stream this episode. " + NEW_SEARCH_MESSAGE);
+      this.emit(":ask", "Sorry, I couldn't stream this episode. " + NEW_SEARCH_MESSAGE + 'or' + END_SESSION_MESSAGE);
     },
 
     "NewSessionIntent": function(){
@@ -238,6 +229,10 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
       this.handler.state = states.DESCRIPTION;
       ReadDescriptionIntentHandler.call(this);
     },
+
+    'EndSessionIntent': function(){
+      EndSessionIntentHandler.call(this);
+    }
 
 
   });
@@ -252,7 +247,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     },
 
     "Unhandled": function(){
-      this.emit(":ask", " You can say 'Description', 'Play This Episode', or 'Next Result.'");
+      this.emit(":ask", UNHANDELED_MESSAGE + "You can say 'Description', 'Play This Episode', 'Next Result, or 'End Session' to quit.'");
     },
 
     "NewSessionIntent": function(){
@@ -273,6 +268,10 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
 
     'AMAZON.StopIntent': function () {
       this.emit(":tell", "Ok.");
+    },
+
+    'EndSessionIntent': function(){
+      EndSessionIntentHandler.call(this);
     }
 
 
@@ -355,7 +354,8 @@ function SearchByTopicIntentHandler(){
 
 function ReadDescriptionIntentHandler(){
   var description = this.attributes.currentEpisodeInfo.description;
-  this.emit(":ask", description);
+  var speechOutput = generateSSMLOutput(description);
+  this.emit(":ask", speechOutput);
 }
 
 function PlayEpisodeIntentHandler(podcast){
@@ -518,5 +518,18 @@ function formatDate(date) {
 }
 
 function generateResultSpeechOutput(title){
-  return "I found this episode: " + title + "." + " You can say 'Description', 'Play This Episode.'";
+  var speechOutput = "I found this episode: " + title + "." + " You can say 'Description', or 'Play This Episode.'";
+  if (speechOutput.length < 8000){
+    return speechOutput;
+  } else {
+    return "the response size is too big. You can say new session to start a new search";
+  }
+}
+
+function generateSSMLOutput(phrase){
+  if (phrase.includes("<") || phrase.length >= 8000) {
+    return "Sorry, I could not generate the description. You can say 'Play Episode' or 'New Session' to start a new search";
+  } else {
+    return phrase;
+  }
 }

@@ -29,8 +29,8 @@ var skillName = "Alexa This American Life Lookup";
 
 var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. ";
 
-var DESCRIPTION_MODE_HELP_MESSAGE = "Here are some things you can say: find episode, or tell me about the episode";
-var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number or on a topic";
+var DESCRIPTION_MODE_HELP_MESSAGE = "Here are some things you can say: 'play episode', or 'description'";
+var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number, topic, or date published";
 var STREAM_MODE_HELP_MESSAGE = "";
 var MULTIPLE_RESULTS_MODE_HELP_MESSAGE = "";
 
@@ -90,6 +90,10 @@ var launchHandlers = {
 
   'AMAZON.StopIntent': function () {
     this.emit(":tell", "Ok.");
+  },
+
+  'EndSessionIntent': function(){
+    EndSessionIntentHandler.call(this);
   }
 
 };
@@ -170,7 +174,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
         output = this.attributes.currentEpisodeInfo.description;
       }
       else {
-        output = "I can't recall what I said before" + DESCRIPTION_MODE_HELP_MESSAGE;
+        output = "I can't recall what I said before. " + DESCRIPTION_MODE_HELP_MESSAGE;
       }
       this.emit(":ask", output);
     },
@@ -248,7 +252,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     },
 
     "Unhandled": function(){
-      this.emit(":ask", " You can say 'Description', 'Play This Episode', or 'Next Result'");
+      this.emit(":ask", " You can say 'Description', 'Play This Episode', or 'Next Result.'");
     },
 
     "NewSessionIntent": function(){
@@ -367,6 +371,13 @@ function PlayEpisodeIntentHandler(podcast){
 
 }
 
+function EndSessionIntentHandler(){
+  Object.assign(this.attributes, {
+    "shouldEndSession": true
+  });
+  this.emit(':tell', SHUTDOWN_MESSAGE);
+}
+
 function NewSessionIntentHandler(){
 
   Object.assign(this.attributes, {
@@ -412,7 +423,6 @@ function SearchByDateCreatedIntentHandler(){
           }
         );
         var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
-        console.log(speechOutput);
         that.emit(":ask", speechOutput);
 
       } else {
@@ -428,7 +438,6 @@ function SearchByDateCreatedIntentHandler(){
     );
 
     var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
-    console.log(speechOutput);
     that.emit(":ask", speechOutput);
 
     }
@@ -509,5 +518,5 @@ function formatDate(date) {
 }
 
 function generateResultSpeechOutput(title){
-  return "I found this episode: " + title + "." + " You can say 'Description', 'Play This Episode'";
+  return "I found this episode: " + title + "." + " You can say 'Description', 'Play This Episode.'";
 }

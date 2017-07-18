@@ -15,4 +15,4 @@ This repo contains a template to build your own podcast specific Alexa skill. On
 ## Tech Stack
 A completed Alexa Skill function using this template will be written with the Alexa Skills Kit SDK for Node.js.
 The function will be hosted on AWS Lambda and deployed through the Alexa Skills Kit on the Amazon Developer Console.
-This Alexa Skill template is powered by the audiosear.ch podcast API. 
+This Alexa Skill template is powered by the audiosear.ch podcast API.

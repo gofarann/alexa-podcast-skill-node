@@ -26,13 +26,13 @@ var audiosearch = new Audiosearch(app_id, secret_key);
 // =====================================================================================================
 
 //the name of the podcast (string) used in utterances
-var podcast = "";
+var podcast = "stuff you should know";
 
 // episode id (integer) used in API searches
 // can be found at this API endpoint: https://www.audiosear.ch/api/search/shows/
 // i.e. Stuff You Should Know id = 358 according to https://www.audiosear.ch/api/search/shows/stuff%20you%20should%20know
 
-var audiosearch_podcast_id = "";
+var audiosearch_podcast_id = 358;
 
 /*
 published_day_of_week is the day of the week that the podcast is published to audiosear.ch
@@ -40,7 +40,7 @@ un-comment the line of code based the 'date_created' data point from audiosear.c
 if there are multiple days of the week for publication, add multiple numbers in the array (sunday=0...saturday=6).
 for a podcast that is published on both monday and tuesday, the code would be: var published_day_of_week = [1, 2];
 */
-var published_day_of_week = [1, 2];
+var published_day_of_week = [1, 2, 3, 4, 5, 6, 0];
 
 
 var WELCOME_MESSAGE = "Welcome to the " + podcast + " episode lookup skill. ";
@@ -425,26 +425,27 @@ function SearchByDateCreatedIntentHandler(){
      });
   }
 
+  var that = this;
+
   for (var i = 0; i < published_day_of_week.length; i++){
-    var that = this;
     var query = "date_created:" + closestCreatedDateForQuery(that.attributes.dateQuery, published_day_of_week[i]);
+    console.log("query date: " + query);
 
     audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id}).then(function (results) {
+      console.log("results" + results[0]);
       if (results.total_results !== 0){
         Object.assign(that.attributes, {
           "currentEpisodeInfo": results.results[0],
         });
-      var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
-      that.emit(":ask", speechOutput);
-      }
+
+        var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+        console.log(speechOutput);
+        that.emit(":ask", speechOutput);
+    }
     });
   }
-
-
-  var output = "Sorry, I couldn't find an episode based on that date. " + NEW_SEARCH_MESSAGE;
-  this.emit(":ask", output);
-
 }
+
 
 // =====================================================================================================
 // ------------------------------------ Section 3.  Helper Functions  ----------------------------------

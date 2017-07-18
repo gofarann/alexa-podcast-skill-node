@@ -1,0 +1,1036 @@
+{
+  "intents": [
+    {
+      "name": "AMAZON.CancelIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.HelpIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.NoIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.PauseIntent",
+      "samples": [
+        "stop"
+      ]
+    },
+    {
+      "name": "AMAZON.RepeatIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.ResumeIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.StartOverIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.StopIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.YesIntent",
+      "samples": []
+    },
+    {
+      "name": "EndSessionIntent",
+      "samples": [
+        "{end} session",
+        "{end} program",
+        "{end} amlife episode lookup"
+      ],
+      "slots": [
+        {
+          "name": "end",
+          "type": "END",
+          "samples": []
+        }
+      ]
+    },
+    {
+      "name": "NewSessionIntent",
+      "samples": [
+        "new {session}",
+        "start a new {session}",
+        "start new {session}"
+      ],
+      "slots": [
+        {
+          "name": "session",
+          "type": "SESSION",
+          "samples": []
+        }
+      ]
+    },
+    {
+      "name": "NextResultIntent",
+      "samples": [
+        "next result",
+        "next",
+        "next episode"
+      ],
+      "slots": []
+    },
+    {
+      "name": "PlayEpisodeIntent",
+      "samples": [
+        "play episode",
+        "start episode",
+        "play podcast",
+        "play podcast episode",
+        "play",
+        "start"
+      ],
+      "slots": []
+    },
+    {
+      "name": "ReadDescriptionIntent",
+      "samples": [
+        "read me the description",
+        "tell me about the episode",
+        "tell me more about the episode",
+        "description"
+      ],
+      "slots": []
+    },
+    {
+      "name": "SearchByDateCreatedIntent",
+      "samples": [
+        "{find} {articles} {episode} {dateCreated}",
+        "{find} {articles} {episode} {published} {dateCreated}",
+        "{find} {dateCreated} {episode} "
+      ],
+      "slots": [
+        {
+          "name": "dateCreated",
+          "type": "AMAZON.DATE",
+          "samples": []
+        },
+        {
+          "name": "articles",
+          "type": "ARTICLES",
+          "samples": []
+        },
+        {
+          "name": "find",
+          "type": "FIND",
+          "samples": []
+        },
+        {
+          "name": "published",
+          "type": "PUBLISHED",
+          "samples": []
+        },
+        {
+          "name": "episode",
+          "type": "EPISODE",
+          "samples": []
+        }
+      ]
+    },
+    {
+      "name": "SearchByEpisodeNumberIntent",
+      "samples": [
+        "{episodeNumber}",
+        "{find} {episode} {episodeNumber}"
+      ],
+      "slots": [
+        {
+          "name": "episodeNumber",
+          "type": "AMAZON.NUMBER",
+          "samples": []
+        },
+        {
+          "name": "find",
+          "type": "FIND",
+          "samples": []
+        },
+        {
+          "name": "episode",
+          "type": "EPISODE",
+          "samples": []
+        }
+      ]
+    },
+    {
+      "name": "SearchByTopicIntent",
+      "samples": [
+        "{find} {article} {episode} {about} {searchTopic}",
+        "{find} {episode} {about} {searchTopic}"
+      ],
+      "slots": [
+        {
+          "name": "searchTopic",
+          "type": "PODCAST_CATEGORIES",
+          "samples": []
+        },
+        {
+          "name": "article",
+          "type": "ARTICLES",
+          "samples": []
+        },
+        {
+          "name": "about",
+          "type": "ABOUT",
+          "samples": []
+        },
+        {
+          "name": "find",
+          "type": "FIND",
+          "samples": []
+        },
+        {
+          "name": "episode",
+          "type": "EPISODE",
+          "samples": []
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "ABOUT",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "about",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "regarding",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "on",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "dealing with",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "concerning",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "with reference to",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "on the subject of",
+            "synonyms": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "ARTICLES",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "this",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "an",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "a",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "the",
+            "synonyms": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "END",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "end",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "quit",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "exit",
+            "synonyms": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "EPISODE",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "episode",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "episode number",
+            "synonyms": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "FIND",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "look for",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "search for",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "give me",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "find",
+            "synonyms": [
+              "find me"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PODCAST_CATEGORIES",
+      "values": [
+        {
+          "id": "",
+          "name": {
+            "value": "Relationships",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Arts",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Hunting",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Entertainment",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Investing",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Outdoors",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Wall Street",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Legal",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Sports",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Religion",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "International Politics",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "NSFW",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Self-Improvement",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Pets",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Opinion",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Medicine",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Automotive",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Dating",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Asia",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Winter Holidays",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Social Media",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Literature",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Eating",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Farming/Gardening",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Business",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Nature",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Food",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Scientific Research",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Photography",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Beverages",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "News/Politics",
+            "synonyms": [
+              "News",
+              "Politics"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Diet",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Anatomy",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Energy/Climate Change",
+            "synonyms": [
+              "Energy",
+              "Climate"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Space",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "California",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "European Politics",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Judicial",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "NBA",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Drugs",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Economics",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Animals",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Conflict/War",
+            "synonyms": [
+              "Conflict",
+              "War"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Music",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Brain Science",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Science",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "U.S. Politics",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "NFL",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Places/Transportation",
+            "synonyms": [
+              "Transportation"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Disease",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Fighting",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Movies",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Health Care",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Race",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Women's Health",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Death/Disaster",
+            "synonyms": [
+              "Death",
+              "Disaster"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Sleep/Spooky",
+            "synonyms": [
+              "Sleep",
+              "Spooky"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Fitness",
+            "synonyms": [
+              "Working out"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Conservative Politics",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Digital Entrepreneurship",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Crime",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Startups",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "History",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Comedy",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Guns/Police",
+            "synonyms": [
+              "Guns",
+              "Police"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Family",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Pro Wrestling",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Medical Treatment",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Colloquial",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "U.S. Election 2016",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "College Football",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Sex",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Cryptocurrency",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "TV",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Fashion/Style",
+            "synonyms": [
+              "Fashion",
+              "Style"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Radio",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Communication",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Tech",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Money",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Education",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "Mobile Tech",
+            "synonyms": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUBLISHED",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "created",
+            "synonyms": [
+              "created on"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "published",
+            "synonyms": [
+              "published on"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "from",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "uploaded",
+            "synonyms": [
+              "uploaded on"
+            ]
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "aired",
+            "synonyms": [
+              "aired on"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "SESSION",
+      "values": [
+        {
+          "id": null,
+          "name": {
+            "value": "session",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "search",
+            "synonyms": []
+          }
+        },
+        {
+          "id": null,
+          "name": {
+            "value": "search session",
+            "synonyms": []
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@ var Alexa = require('alexa-sdk');
 
 require('dotenv').config();
 
-Alexa.appId = '';
+Alexa.appId = 'amzn1.ask.skill.6eb79e40-418c-4d22-8617-04048048d025';
 
 exports.handler = function(event, context, callback){
   var alexa = Alexa.handler(event, context, callback);
@@ -25,22 +25,9 @@ var audiosearch = new Audiosearch(app_id, secret_key);
 // --------------------------------- Section 1. Data and Text strings  ---------------------------------
 // =====================================================================================================
 
-//the name of the podcast (string) used in utterances
-var podcast = "";
+var skillName = "Alexa This American Life Lookup";
 
-// episode id (integer) used in API searches
-// can be found at this API endpoint: https://www.audiosear.ch/api/search/shows/
-// i.e. Stuff You Should Know id = 358 according to https://www.audiosear.ch/api/search/shows/stuff%20you%20should%20know
-
-var audiosearch_podcast_id = "";
-
-//day of the week that the podcast is published to audiosear.ch
-//un-comment the line of code based the 'date_created' data point from audiosear.ch
-//if there are multiple days of the week for publication, add multiple numbers in the array (sunday=0...saturday=6).
-
-var published_day_of_week = [1, 2];
-
-var WELCOME_MESSAGE = "Welcome to the " + podcast + " episode lookup skill. ";
+var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. ";
 
 var DESCRIPTION_MODE_HELP_MESSAGE = "Here are some things you can say: 'play this episode', or 'description'";
 var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number, topic, or date published";
@@ -55,7 +42,7 @@ var UNHANDELED_MESSAGE = "I'm not sure what that means, ";
 var NEW_SEARCH_MESSAGE = "You can say 'New Session' to start a new search";
 
 // =====================================================================================================
-// ---------------------------------------- Section 2. States  -----------------------------------------
+// --------------------------------- Section 2. States  ---------------------------------
 // =====================================================================================================
 
 var states = {
@@ -114,6 +101,7 @@ var launchHandlers = {
 
 var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
 
+  ///////////// custom intents //////////////
   "NewSessionIntent": function(){
     NewSessionIntentHandler.call(this);
   },
@@ -143,6 +131,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   "PlayEpisodeIntent": function(){
     if(this.attributes.currentEpisodeInfo){
       var title = this.attributes.currentEpisodeInfo.title;
+      // console.log(title.substr(1, title.indexOf(':')));
       PlayEpisodeIntentHandler.call(this, title.substr(1, title.indexOf(':')-1));
     } else {
       this.emit(":tell", "Sorry, I couldn't play this episode. " + SEARCH_MODE_HELP_MESSAGE);
@@ -298,7 +287,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     var query = "title:" + episodeNumber;
     var that = this;
 
-    audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id}).then(function (results) {
+    audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
       if (results.total_results !== 0) {
         Object.assign(that.attributes, {
           "STATE": states.DESCRIPTION,
@@ -325,22 +314,25 @@ function SearchByTopicIntentHandler(){
       "searchQuery": searchTopic
     });
   } else {
-
+    // do this when there is an existing searchQuery in the attributes
+    // nothing because there is already a searchTopic attribute
   }
 
   if(this.attributes.onResult !== undefined){
+    // do this when this is NOT the first search
     var count = this.attributes.onResult + 1;
     Object.assign(this.attributes, {
       "onResult": count
     });
   } else {
+    // do this when this is the first search
     Object.assign(this.attributes, {
       "onResult": 1
     });
   }
   var that = this;
 
-  audiosearch.searchEpisodes(that.attributes.searchQuery.value, {"filters[show_id]":audiosearch_podcast_id, "size":1, "from":that.attributes.onResult}).then(function (results) {
+  audiosearch.searchEpisodes(that.attributes.searchQuery.value, {"filters[show_id]":27, "size":1, "from":that.attributes.onResult}).then(function (results) {
 
     if (results.total_results !== 0){
       Object.assign(that.attributes, {
@@ -370,11 +362,7 @@ function PlayEpisodeIntentHandler(podcast){
   this.handler.state = states.STREAM_MODE;
 
   var playBehavior = 'REPLACE_ALL';
-  // this will vary based on where mp3s of this podcast are located.
-  // if the url does not exist in this.attributes.currentEpisodeInfo.identifier
-  // uncomment the generatePodcastUrl function in this file and create your own custom url function
-  var podcastUrl = this.attributes.currentEpisodeInfo.identifier;
-  // var podcastUrl = generatePodcastUrl();
+  var podcastUrl = generatePodcastUrl(podcast);
   var token = "12345";
   var offsetInMilliseconds = 0;
 
@@ -422,36 +410,112 @@ function SearchByDateCreatedIntentHandler(){
      });
   }
 
-  for (var i = 0; i < published_day_of_week.length; i++){
-    var that = this;
-    var query = "date_created:" + closestCreatedDateForQuery(that.attributes.dateQuery, published_day_of_week[i]);
+  var query = "date_created:" + closestSundayBefore(this.attributes.dateQuery);
+  var that = this;
 
-    audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id}).then(function (results) {
-      if (results.total_results !== 0){
-        Object.assign(that.attributes, {
-          "currentEpisodeInfo": results.results[0],
-        });
-      var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
-      that.emit(":ask", speechOutput);
+  audiosearch.searchEpisodes(query, {"filters[show_id]":27}).then(function (results) {
+    if (results.total_results === 0) {
+      var query = "date_created:" + closestMondayAfter(that.attributes.dateQuery);
+      audiosearch.searchEpisodes(query,{"filters[show_id]":27}).then(function (results) {
+        if (results.total_results !== 0){
+          Object.assign(that.attributes, {
+            "currentEpisodeInfo": results.results[0],
+          }
+        );
+        var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+        that.emit(":ask", speechOutput);
+
+      } else {
+        var output = "Sorry, I couldn't find an episode based on that date. " + NEW_SEARCH_MESSAGE;
+        that.emit(":ask", output);
       }
     });
-  }
 
+  } else {
+    Object.assign(that.attributes, {
+      "currentEpisodeInfo": results.results[0],
+      }
+    );
 
-  var output = "Sorry, I couldn't find an episode based on that date. " + NEW_SEARCH_MESSAGE;
-  this.emit(":ask", output);
+    var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+    that.emit(":ask", speechOutput);
 
+    }
+  });
 }
-
 // =====================================================================================================
 // ------------------------------------ Section 3.  Helper Functions  ----------------------------------
 // =====================================================================================================
 
-// if mp3 url does not exist in the API response, you can create a custom function here.
-// function generatePodcastUrl(episodeNumber) {
-//     return
-// }
+function getRandomEpisodeNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
 
+function generatePodcastUrl(episodeNumber) {
+  if (parseInt(episodeNumber) <= 536){
+    return "https://audio.thisamericanlife.org/jomamashouse/ismymamashouse/" + episodeNumber + ".mp3";
+  }
+  else {
+    return "https://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
+  }
+}
+
+function closestSundayBefore(dateQuery) {
+  var d = new Date(dateQuery);
+
+  if (d.getDay() !== 0){
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    // minus 1 gets the sunday
+    var sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    return formatDate(sunday);
+  } else {
+    return formatDate(d);
+  }
+}
+
+function closestMondayAfter(dateQuery) {
+  var d = new Date(dateQuery);
+
+  if (d.getDay() !== 1){
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    // plus 7 gets the monday week before
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7);
+    return formatDate(monday);
+  } else {
+    return formatDate(d);
+  }
+}
+
+function closestMondayBefore(dateQuery) {
+  var d = new Date(dateQuery);
+
+  if (d.getDay() !== 1){
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    // plus 7 gets the monday week before
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return formatDate(monday);
+  } else {
+    return formatDate(d);
+  }
+}
+
+// this is going to always return sunday
+function getDateOfWeek(w, y) {
+    var d = (1 + (w - 1) * 7);
+    return formatDate(new Date(y, 0, d));
+}
+
+function formatDate(date) {
+  var d = new Date(date),
+  month = '' + (d.getMonth() + 1),
+  day = '' + d.getDate(),
+  year = d.getFullYear();
+
+  if (month.length < 2) month = '0' + month;
+  if (day.length < 2) day = '0' + day;
+
+  return [year, month, day].join('-');
+}
 
 function generateResultSpeechOutput(title){
   var speechOutput = "I found this episode: " + title + "." + " You can say 'Description', or 'Play This Episode.'";
@@ -468,42 +532,4 @@ function generateSSMLOutput(phrase){
   } else {
     return phrase;
   }
-}
-
-
-// =====================================================================================================
-// ------------------------------------ Section 4.  Date Functions  ------------------------------------
-// =====================================================================================================
-
-
-
-// ------------------------------------ Closest Day of Week Before Functions  --------------------------
-
-function closestCreatedDateForQuery(dateQuery, dayOfWeek) {
-  var d = new Date(dateQuery);
-
-  if (d.getDay() !== 0){
-    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
-    var sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dayOfWeek);
-    return formatDate(sunday);
-  } else {
-    return formatDate(d);
-  }
-}
-
-function getDateOfWeek(w, y) {
-    var d = (1 + (w - 1) * 7);
-    return formatDate(new Date(y, 0, d));
-}
-
-function formatDate(date) {
-  var d = new Date(date),
-  month = '' + (d.getMonth() + 1),
-  day = '' + d.getDate(),
-  year = d.getFullYear();
-
-  if (month.length < 2) month = '0' + month;
-  if (day.length < 2) day = '0' + day;
-
-  return [year, month, day].join('-');
 }

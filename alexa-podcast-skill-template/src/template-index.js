@@ -28,19 +28,11 @@ var audiosearch = new Audiosearch(app_id, secret_key);
 //the name of the podcast (string) used in utterances
 var podcast = "";
 
-// episode id (integer) used in API searches
-// can be found at this API endpoint: https://www.audiosear.ch/api/search/shows/
-// i.e. Stuff You Should Know id = 358 according to https://www.audiosear.ch/api/search/shows/stuff%20you%20should%20know
-
-var audiosearch_podcast_id = "";
-
-/*
-published_day_of_week is the day of the week that the podcast is published to audiosear.ch
-un-comment the line of code based the 'date_created' data point from audiosear.ch
-if there are multiple days of the week for publication, add multiple numbers in the array (sunday=0...saturday=6).
-for a podcast that is published on both monday and tuesday, the code would be: var published_day_of_week = [1, 2];
+/* NOTE: audiosearch_podcast_id is the episode id (integer) used in API searches
+can be found at this API endpoint: https://www.audiosear.ch/api/search/shows/
+i.e. Stuff You Should Know id = 358 according to https://www.audiosear.ch/api/search/shows/stuff%20you%20should%20know
 */
-var published_day_of_week = [1, 2];
+var audiosearch_podcast_id = "";
 
 
 var WELCOME_MESSAGE = "Welcome to the " + podcast + " episode lookup skill. ";
@@ -75,7 +67,12 @@ var launchHandlers = {
 
   },
 
+
   "SearchByEpisodeNumberIntent": function() {
+    /*
+    NOTE: this function only works if the podcast identifies each episode by a unique number
+    comment out if the podcast has no unique episode identifier
+    */
     this.handler.state = states.SEARCH_MODE;
     SearchByEpisodeNumberIntentHandler.call(this);
   },
@@ -126,6 +123,10 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   },
 
   "SearchByEpisodeNumberIntent": function() {
+    /*
+    NOTE: this function only works if the podcast identifies each episode by a unique number
+    comment out if the podcast has no unique episode identifier
+    */
     SearchByEpisodeNumberIntentHandler.call(this);
   },
 
@@ -297,6 +298,9 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   // =====================================================================================================
 
   function SearchByEpisodeNumberIntentHandler(){
+    /*
+    NOTE: this function only works if the podcast identifies each episode by a unique number
+    */
     var episodeNumber = this.event.request.intent.slots.episodeNumber.value;
     var query = "title:" + episodeNumber;
     var that = this;
@@ -425,26 +429,34 @@ function SearchByDateCreatedIntentHandler(){
      });
   }
 
-  for (var i = 0; i < published_day_of_week.length; i++){
-    var that = this;
-    var query = "date_created:" + closestCreatedDateForQuery(that.attributes.dateQuery, published_day_of_week[i]);
+  //construct query
+  var dateQueryStart = "[" + oneWeekAgo(this.attributes.dateQuery);
+  var dateQueryEnd = this.attributes.dateQuery + "]";
+  var query = "date_created:" + dateQueryStart + ", " + dateQueryEnd;
 
-    audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id}).then(function (results) {
-      if (results.total_results !== 0){
-        Object.assign(that.attributes, {
-          "currentEpisodeInfo": results.results[0],
-        });
+  var that = this;
+
+  //search API
+  audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id, "sort_by":"date_created", "sort_order":"asc"}).then(function (results) {
+    if (results.total_results !== 0){
+
+      Object.assign(that.attributes, {
+        "currentEpisodeInfo": results.results[0]
+      });
+
       var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
       that.emit(":ask", speechOutput);
-      }
-    });
-  }
+
+    } else {
+      that.emit(":ask", "Sorry, I couldn't find any episodes from that date search." + NEW_SEARCH_MESSAGE);
+    }
+
+  });
 
 
-  var output = "Sorry, I couldn't find an episode based on that date. " + NEW_SEARCH_MESSAGE;
-  this.emit(":ask", output);
 
 }
+
 
 // =====================================================================================================
 // ------------------------------------ Section 3.  Helper Functions  ----------------------------------
@@ -482,16 +494,10 @@ function generateSSMLOutput(phrase){
 
 // ------------------------------------ Closest Day of Week Before Functions  --------------------------
 
-function closestCreatedDateForQuery(dateQuery, dayOfWeek) {
+function oneWeekAgo(dateQuery) {
   var d = new Date(dateQuery);
-
-  if (d.getDay() !== 0){
-    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
-    var sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dayOfWeek);
-    return formatDate(sunday);
-  } else {
-    return formatDate(d);
-  }
+  var lastWeek = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7);
+  return formatDate(lastWeek) ;
 }
 
 function getDateOfWeek(w, y) {

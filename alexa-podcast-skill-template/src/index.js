@@ -425,25 +425,32 @@ function SearchByDateCreatedIntentHandler(){
      });
   }
 
+  //construct query
+  var dateQueryStart = "[" + oneWeekAgo(this.attributes.dateQuery);
+  var dateQueryEnd = this.attributes.dateQuery + "]";
+  var query = "date_created:" + dateQueryStart + ", " + dateQueryEnd;
+
   var that = this;
 
-  for (var i = 0; i < published_day_of_week.length; i++){
-    var query = "date_created:" + closestCreatedDateForQuery(that.attributes.dateQuery, published_day_of_week[i]);
-    console.log("query date: " + query);
+  //search API
+  audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id, "sort_by":"date_created", "sort_order":"asc"}).then(function (results) {
+    if (results.total_results !== 0){
 
-    audiosearch.searchEpisodes(query, {"filters[show_id]":audiosearch_podcast_id}).then(function (results) {
-      console.log("results" + results[0]);
-      if (results.total_results !== 0){
-        Object.assign(that.attributes, {
-          "currentEpisodeInfo": results.results[0],
-        });
+      Object.assign(that.attributes, {
+        "currentEpisodeInfo": results.results[0]
+      });
 
-        var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
-        console.log(speechOutput);
-        that.emit(":ask", speechOutput);
+      var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+      that.emit(":ask", speechOutput);
+
+    } else {
+      that.emit(":ask", "Sorry, I couldn't find any episodes from that date search." + NEW_SEARCH_MESSAGE);
     }
-    });
-  }
+
+  });
+
+
+
 }
 
 
@@ -483,16 +490,10 @@ function generateSSMLOutput(phrase){
 
 // ------------------------------------ Closest Day of Week Before Functions  --------------------------
 
-function closestCreatedDateForQuery(dateQuery, dayOfWeek) {
+function oneWeekAgo(dateQuery) {
   var d = new Date(dateQuery);
-
-  if (d.getDay() !== 0){
-    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
-    var sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dayOfWeek);
-    return formatDate(sunday);
-  } else {
-    return formatDate(d);
-  }
+  var lastWeek = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7);
+  return formatDate(lastWeek) ;
 }
 
 function getDateOfWeek(w, y) {

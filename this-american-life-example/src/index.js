@@ -1,6 +1,8 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
+var sizeof = require('object-sizeof');
+
 
 require('dotenv').config();
 
@@ -389,22 +391,25 @@ function SearchByTopicIntentHandler(){
 
   audiosearch.searchEpisodes(that.attributes.searchQuery.value, {"filters[show_id]":27, "size":1, "from":that.attributes.onResult}).then(function (results) {
 
-    if (results.total_results !== 0){
+    if (results.total_results !== 0 && sizeof(results.results[0]) < 24000){
       Object.assign(that.attributes, {
         "STATE": states.MULTIPLE_RESULTS_MODE,
         "currentEpisodeInfo": results.results[0],
       }
     );
-
     var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
     that.emit(":ask", speechOutput);
 
-  } else {
+  } else if (results.total_results !== 0 && sizeof(results.results[0]) >= 24000){
 
-    var output = "Sorry, I couldn't find an episode on that topic. " + NEW_SEARCH_MESSAGE;
-    that.emit(":ask", output);
-  }
-});
+      that.emit(":tell", "sorry, this search was too broad. Please say 'new session' to search for a narrower topic");
+
+    } else {
+
+      var output = "Sorry, I couldn't find an episode on that topic. " + NEW_SEARCH_MESSAGE;
+      that.emit(":ask", output);
+    }
+  });
 }
 
 function ReadDescriptionIntentHandler(){

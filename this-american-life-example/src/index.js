@@ -44,7 +44,7 @@ var UNHANDELED_MESSAGE = "I'm not sure what that means, ";
 var NEW_SEARCH_MESSAGE = "You can say 'New Session' to start a new search";
 
 // =====================================================================================================
-// --------------------------------- Section 2. States  ---------------------------------
+// --------------------------------- Section 2. States  ------------------------------------------------
 // =====================================================================================================
 
 var states = {
@@ -85,8 +85,10 @@ var launchHandlers = {
   },
 
   "Unhandled": function() {
-    console.log(this);
-    this.emit(":ask", UNHANDELED_MESSAGE + NEW_SEARCH_MESSAGE + " or" + END_SESSION_MESSAGE);
+    this.response.audioPlayerStop();
+    this.response.speak("Audio stopped.");
+    this.emit(':responseReady');
+
   },
 
   "SearchByDateCreatedIntent": function(){
@@ -106,9 +108,7 @@ var launchHandlers = {
   },
 
   'AMAZON.StopIntent': function () {
-    this.response.audioPlayerStop();
-    this.emit(':responseReady');
-
+    EndSessionIntentHandler.call(this);
   }
 
 };
@@ -230,21 +230,15 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
         this.emit(":tell", "Sorry, I couldn't play this episode. ");
       }
     },
-    //
-    // "AMAZON.PauseIntent": function(){
-    //   console.log(this.handler.state);
-    //   // this should stop the audio player, but doesn't
-    //   this.response.audioPlayerStop();
-    //   this.response.cardRenderer("hello","test");
-    //
-    //   Object.assign(this.response.directives, {
-    //     "type": 'AudioPlayer.Stop'
-    //   });
-    //
-    //   this.emit(':responseReady');
-    //
-    // },
-    //
+
+    'AMAZON.PauseIntent' : function () {
+     this.response.audioPlayerStop();
+     this.response.speak('Paused. See you next time!');
+     this.emit(':responseReady');
+    },
+
+
+
     // "AMAZON.ResumeIntent": function(){
     //   this.response.audioPlayerPlay();
     //   this.response.speak('Resuming episode.');
@@ -288,12 +282,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     },
 
     'AMAZON.StopIntent': function () {
-      this.response.audioPlayerStop();
-      this.emit(':responseReady');
-
+      EndSessionIntentHandler.call(this);
     }
-
-
 
   });
 
@@ -426,22 +416,28 @@ function ReadDescriptionIntentHandler(){
 function PlayEpisodeIntentHandler(podcast){
   this.handler.state = states.STREAM_MODE;
 
-  var playBehavior = 'REPLACE_ALL';
-  var podcastUrl = generatePodcastUrl(podcast);
-  var token = "0";
-  var offsetInMilliseconds = 0;
+  if (parseInt(podcast) >= 537){
+    this.emit(":ask", "sorry, episode before five hundred thirty seven aren't available for streaming. " + NEW_SEARCH_MESSAGE);
+  } else {
 
-  this.response.audioPlayerPlay(playBehavior, podcastUrl, token, null, offsetInMilliseconds);
+    var playBehavior = 'REPLACE_ALL';
+    var podcastUrl = generatePodcastUrl(podcast);
+    var token = "0";
+    var offsetInMilliseconds = 0;
 
-  Object.assign(this.attributes, {
-    "shouldEndSession": false
-  });
+    this.response.audioPlayerPlay(playBehavior, podcastUrl, token, null, offsetInMilliseconds);
 
-  this.emit(':responseReady');
+    Object.assign(this.attributes, {
+      "shouldEndSession": false
+    });
 
+    this.emit(':responseReady');
+
+  }
 }
 
 function EndSessionIntentHandler(){
+
   Object.assign(this.attributes, {
     "shouldEndSession": true
   });
@@ -526,7 +522,10 @@ function generatePodcastUrl(episodeNumber) {
     return "https://audio.thisamericanlife.org/jomamashouse/ismymamashouse/" + episodeNumber + ".mp3";
   }
   else {
-    return "https://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
+    // return "https://audio.thisamericanlife.org/podcast/" + episodeNumber + ".mp3";
+    // return "https://assets.thisamericanlife.co/podcasts/" + episodeNumber + ".mp3";
+    // return "https://www.thisamericanlife.org/play_full.php?play=" + episodeNumber;
+
   }
 }
 

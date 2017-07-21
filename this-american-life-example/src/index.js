@@ -58,7 +58,6 @@ var states = {
 
 var launchHandlers = {
   'LaunchRequest': function () {
-    this.response.cardRenderer("Welcome", "sample card", null);
     this.emit(':ask', WELCOME_MESSAGE + SEARCH_MODE_HELP_MESSAGE);
 
   },

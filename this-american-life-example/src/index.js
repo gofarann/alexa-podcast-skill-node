@@ -600,7 +600,7 @@ function generateResultSpeechOutput(title){
 }
 
 function generateSSMLOutput(phrase){
-  if (phrase.includes("<") || phrase.length >= 8000) {
+  if (phrase.includes("<")) {
     return "Sorry, I could not generate the description. You can say 'Play Episode' or 'New Session' to start a new search";
   } else {
     return phrase;

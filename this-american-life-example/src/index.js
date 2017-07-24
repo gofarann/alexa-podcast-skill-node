@@ -33,7 +33,7 @@ var skillName = "Alexa This American Life Lookup";
 var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. ";
 var HELP_MESSAGE = SEARCH_MODE_HELP_MESSAGE + "For example, 'Find an episode about economics'." + "You can also say 'New Session' to start a new search.";
 
-var DESCRIPTION_MODE_HELP_MESSAGE = "Here are some things you can say: 'play this episode', or 'description'";
+var DESCRIPTION_MODE_HELP_MESSAGE = "You can say: 'play this episode', or 'description'";
 var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number, topic, or date published";
 var STREAM_MODE_HELP_MESSAGE = "";
 var MULTIPLE_RESULTS_MODE_HELP_MESSAGE = "You can say 'Next Result' to get the next search result, or " + NEW_SEARCH_MESSAGE;
@@ -71,8 +71,8 @@ var launchHandlers = {
   "PlayEpisodeIntent": function() {
     this.handler.state = states.STREAM_MODE;
 
-    if(this.attributes.currentEpisodeInfo){
-      var title = generateTALTitle(this.attributes.currentEpisodeInfo.title);
+    if(this.attributes){
+      var title = generateTALTitle(this.attributes.title);
       PlayEpisodeIntentHandler.call(this, title);
 
     } else {
@@ -146,8 +146,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
   "PlayEpisodeIntent": function(){
     this.handler.state = states.STREAM_MODE;
 
-    if(this.attributes.currentEpisodeInfo){
-      var title = generateTALTitle(this.attributes.currentEpisodeInfo.title);
+    if(this.attributes.title){
+      var title = generateTALTitle(this.attributes.title);
       PlayEpisodeIntentHandler.call(this, title);
     } else {
       this.emit(":tell", "Sorry, I couldn't play this episode. " + SEARCH_MODE_HELP_MESSAGE);
@@ -177,8 +177,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
       this.handler.state = states.STREAM_MODE;
 
 
-      if(this.attributes.currentEpisodeInfo){
-        var title = generateTALTitle(this.attributes.currentEpisodeInfo.title);
+      if(this.attributes){
+        var title = generateTALTitle(this.attributes.title);
         PlayEpisodeIntentHandler.call(this, title);
       } else {
         this.emit(":tell", "Sorry, you have to search for an episode first before playing it.");
@@ -197,8 +197,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
 
     "AMAZON.RepeatIntent": function() {
       var output;
-      if(this.attributes.currentEpisodeInfo.description){
-        output = this.attributes.currentEpisodeInfo.description;
+      if(this.attributes.description){
+        output = this.attributes.description;
       }
       else {
         output = "I can't recall what I said before. " + DESCRIPTION_MODE_HELP_MESSAGE;
@@ -224,8 +224,8 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
 
     "PlayEpisodeIntent": function() {
       this.handler.state = states.STREAM_MODE;
-      if(this.attributes.currentEpisodeInfo){
-        var title = generateTALTitle(this.attributes.currentEpisodeInfo.title);
+      if(this.attributes.title){
+        var title = generateTALTitle(this.attributes.title);
         PlayEpisodeIntentHandler.call(this, title);
       } else {
         this.emit(":tell", "Sorry, I couldn't play this episode. ");
@@ -247,7 +247,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
     // },
 
     "AMAZON.StartOverIntent": function(){
-      var title = generateTALTitle(this.attributes.currentEpisodeInfo.title);
+      var title = generateTALTitle(this.attributes.title);
       PlayEpisodeIntentHandler.call(this, title);
     },
 
@@ -314,7 +314,7 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
 
     "PlayEpisodeIntent": function(){
       this.handler.state = states.STREAM_MODE;
-      var title = generateTALTitle(this.attributes.currentEpisodeInfo.title);
+      var title = generateTALTitle(this.attributes.title);
       PlayEpisodeIntentHandler.call(this, title);
     },
 
@@ -347,10 +347,12 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCH_MODE, {
       if (results.total_results !== 0) {
         Object.assign(that.attributes, {
           "STATE": states.DESCRIPTION,
-          "currentEpisodeInfo": results.results[0]
+          "title": results.results[0].title,
+          "description": results.results[0].description,
+          "date_created": results.results[0].date_created
         }
       );
-      var speechOutput = "I found an episode called " +  that.attributes.currentEpisodeInfo.title + ". " + DESCRIPTION_MODE_HELP_MESSAGE;
+      var speechOutput = "I found an episode called " +  that.attributes.title + ". " + DESCRIPTION_MODE_HELP_MESSAGE;
       that.emit(":ask", speechOutput);
     } else {
       var output = "no results found";
@@ -370,18 +372,15 @@ function SearchByTopicIntentHandler(){
       "searchQuery": searchTopic
     });
   } else {
-    // do this when there is an existing searchQuery in the attributes
-    // nothing because there is already a searchTopic attribute
+
   }
 
   if(this.attributes.onResult !== undefined){
-    // do this when this is NOT the first search
     var count = this.attributes.onResult + 1;
     Object.assign(this.attributes, {
       "onResult": count
     });
   } else {
-    // do this when this is the first search
     Object.assign(this.attributes, {
       "onResult": 1
     });
@@ -390,20 +389,18 @@ function SearchByTopicIntentHandler(){
 
   audiosearch.searchEpisodes(that.attributes.searchQuery.value, {"filters[show_id]":27, "size":1, "from":that.attributes.onResult}).then(function (results) {
 
-    if (results.total_results !== 0 && sizeof(results.results[0]) < 24000){
+    if (results.total_results !== 0){
       Object.assign(that.attributes, {
         "STATE": states.MULTIPLE_RESULTS_MODE,
-        "currentEpisodeInfo": results.results[0],
+        "title": results.results[0].title,
+        "description": results.results[0].description,
+        "date_created": results.results[0].date_created
       }
     );
-    var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
-    that.emit(":ask", speechOutput);
+    var speechOutput = generateResultSpeechOutput(that.attributes.title);
+    that.emit(":ask", speechOutput + " You can say 'Description.', 'Play This Episode.', or 'Next Result.'");
 
-  } else if (results.total_results !== 0 && sizeof(results.results[0]) >= 24000){
-
-      that.emit(":tell", "sorry, this search was too broad. Please say 'new session' to search for a narrower topic");
-
-    } else {
+  } else {
 
       var output = "Sorry, I couldn't find an episode on that topic. " + NEW_SEARCH_MESSAGE;
       that.emit(":ask", output);
@@ -412,7 +409,8 @@ function SearchByTopicIntentHandler(){
 }
 
 function ReadDescriptionIntentHandler(){
-  var description = this.attributes.currentEpisodeInfo.description;
+  var description = this.attributes.description;
+
   var speechOutput = generateSSMLOutput(description);
   this.emit(":tell", speechOutput);
 }
@@ -451,7 +449,7 @@ function EndSessionIntentHandler(){
 function NewSessionIntentHandler(){
 
   Object.assign(this.attributes, {
-    "currentEpisodeInfo": {}
+    "title": {}
   });
   this.emit(":ask", "You've started a new session. " +  SEARCH_MODE_HELP_MESSAGE);
 
@@ -489,10 +487,12 @@ function SearchByDateCreatedIntentHandler(){
       audiosearch.searchEpisodes(query,{"filters[show_id]":27}).then(function (results) {
         if (results.total_results !== 0){
           Object.assign(that.attributes, {
-            "currentEpisodeInfo": results.results[0],
+            "title": results.results[0].title,
+            "description": results.results[0].description,
+            "date_created": results.results[0].date_created
           }
         );
-        var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+        var speechOutput = generateResultSpeechOutput(that.attributes.title) + DESCRIPTION_MODE_HELP_MESSAGE;
         that.emit(":ask", speechOutput);
 
       } else {
@@ -503,11 +503,12 @@ function SearchByDateCreatedIntentHandler(){
 
   } else {
     Object.assign(that.attributes, {
-      "currentEpisodeInfo": results.results[0],
-      }
+      "title": results.results[0].title,
+      "description": results.results[0].description,
+      "date_created": results.results[0].date_created      }
     );
 
-    var speechOutput = generateResultSpeechOutput(that.attributes.currentEpisodeInfo.title);
+    var speechOutput = generateResultSpeechOutput(that.attributes.title);
     that.emit(":ask", speechOutput);
 
     }
@@ -591,12 +592,9 @@ function formatDate(date) {
 }
 
 function generateResultSpeechOutput(title){
-  var speechOutput = "I found this episode: " + title + "." + " You can say 'Description', or 'Play This Episode.'";
-  if (speechOutput.length < 8000){
-    return speechOutput;
-  } else {
-    return "the response size is too big. You can say new session to start a new search";
-  }
+  var speechOutput = "I found this episode: " + title + ".";
+  return speechOutput;
+
 }
 
 function generateSSMLOutput(phrase){

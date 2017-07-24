@@ -31,10 +31,9 @@ var audiosearch = new Audiosearch(app_id, secret_key);
 var skillName = "Alexa This American Life Lookup";
 
 var WELCOME_MESSAGE = "Welcome to the This American Life episode lookup skill. ";
-var HELP_MESSAGE = SEARCH_MODE_HELP_MESSAGE + "For example, 'Find an episode about economics'." + "You can also say 'New Session' to start a new search.";
 
 var DESCRIPTION_MODE_HELP_MESSAGE = "You can say: 'play this episode', or 'description'";
-var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number, topic, or date published";
+var SEARCH_MODE_HELP_MESSAGE = "You can find episodes by episode number, topic, or date published. ";
 var STREAM_MODE_HELP_MESSAGE = "";
 var MULTIPLE_RESULTS_MODE_HELP_MESSAGE = "You can say 'Next Result' to get the next search result, or " + NEW_SEARCH_MESSAGE;
 var END_SESSION_MESSAGE = "'End Session' to exit";
@@ -44,6 +43,9 @@ var UNHANDELED_MESSAGE = "I'm not sure what that means, ";
 
 
 var NEW_SEARCH_MESSAGE = "You can say 'New Session' to start a new search";
+
+var HELP_MESSAGE = SEARCH_MODE_HELP_MESSAGE + "For example, 'Find an episode about economics.' " + "You can also say 'New Session' to start a new search.";
+
 
 // =====================================================================================================
 // --------------------------------- Section 2. States  ------------------------------------------------
@@ -412,14 +414,14 @@ function ReadDescriptionIntentHandler(){
   var description = this.attributes.description;
 
   var speechOutput = generateSSMLOutput(description);
-  this.emit(":tell", speechOutput);
+  this.emit(":ask", speechOutput + ". " + "You can say 'Play this Episode.' or 'Next Result.'");
 }
 
 function PlayEpisodeIntentHandler(podcast){
   this.handler.state = states.STREAM_MODE;
 
   if (parseInt(podcast) >= 537){
-    this.emit(":ask", "sorry, episode before five hundred thirty seven aren't available for streaming. " + NEW_SEARCH_MESSAGE);
+    this.emit(":ask", "sorry, episodes after five hundred thirty seven aren't available for streaming. " + NEW_SEARCH_MESSAGE);
   } else {
 
     var playBehavior = 'REPLACE_ALL';
@@ -451,7 +453,7 @@ function NewSessionIntentHandler(){
   Object.assign(this.attributes, {
     "title": {}
   });
-  this.emit(":ask", "You've started a new session. " +  SEARCH_MODE_HELP_MESSAGE);
+  this.emit(":ask", "You've started a new search. ");
 
 }
 
@@ -592,7 +594,7 @@ function formatDate(date) {
 }
 
 function generateResultSpeechOutput(title){
-  var speechOutput = "I found this episode: " + title + ".";
+  var speechOutput = "I found this episode: " + title + ". ";
   return speechOutput;
 
 }

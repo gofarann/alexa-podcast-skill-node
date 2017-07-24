@@ -510,7 +510,7 @@ function SearchByDateCreatedIntentHandler(){
       "date_created": results.results[0].date_created      }
     );
 
-    var speechOutput = generateResultSpeechOutput(that.attributes.title);
+    var speechOutput = generateResultSpeechOutput(that.attributes.title) + " You can say 'Description.' or 'Play This Episode.'";
     that.emit(":ask", speechOutput);
 
     }

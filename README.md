@@ -1,5 +1,7 @@
 This guide uses setup instructions from the [Alexa City Guide Sample Code for Node JS](https://github.com/alexa/skill-sample-nodejs-city-guide/blob/master/README.md).
 
+For a list of resources I personally found helpful, go [here](https://github.com/gofarann/helpful-alexa-skill-resources/blob/master/README.md).
+
 ## Overview
 This repo contains a template to build your own podcast specific Alexa skill. Once setup, you will be able to find and play podcasts through your Echo with the following intents:
 
